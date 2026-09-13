@@ -807,7 +807,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // APP INITIAL STATE & DEFAULTS
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'bookcraft-studio-app';
@@ -2307,20 +2307,49 @@
             showToast("새 워크스페이스가 생성되었습니다.", "success");
         };
 
-        window.confirmDeleteCurrentWorkspace = function() {
+        window.confirmDeleteCurrentWorkspace = async function() {
             if (Object.keys(window.state.workspaces).length <= 1) {
                 showToast("최소 1개의 워크스페이스가 존재해야 합니다.", "warning");
                 return;
             }
-            delete window.state.workspaces[window.state.activeWorkspaceId];
+
+            if (!confirm("현재 원고(작품)를 정말 삭제하시겠습니까? 삭제된 데이터는 복구할 수 없습니다.")) {
+                return;
+            }
+
+            const targetId = window.state.activeWorkspaceId;
+            
+            // 1. 로컬 상태에서 삭제
+            delete window.state.workspaces[targetId];
             window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
 
+            // 2. 화면 UI 업데이트
             renderWorkspaceList();
             applyStateToUI();
             renderSpreadEditor();
             renderMindMap();
-            performSaveOperation();
-            showToast("워크스페이스가 삭제되었습니다.", "error");
+
+            // 3. LocalStorage 업데이트
+            try {
+                localStorage.setItem('bookcraft_studio_data', JSON.stringify({
+                    activeWorkspaceId: window.state.activeWorkspaceId,
+                    workspaces: window.state.workspaces
+                }));
+            } catch (e) {
+                console.error("Local storage error:", e);
+            }
+
+            // 4. Firebase Firestore 서버에서 완전히 삭제
+            if (db && currentUser && !currentUser.isAnonymous) {
+                try {
+                    const wsDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'workspaces', targetId);
+                    await deleteDoc(wsDocRef);
+                } catch (err) {
+                    console.error("Firestore 삭제 오류:", err);
+                }
+            }
+
+            showToast("원고가 완전히 삭제되었습니다.", "error");
         };
 
         function applyStateToUI() {
