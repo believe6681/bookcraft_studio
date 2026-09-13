@@ -1363,6 +1363,11 @@
             const effectiveLeftMargin = isEvenPage ? baseMargins.right : baseMargins.left;
             const effectiveRightMargin = isEvenPage ? baseMargins.left : baseMargins.right;
 
+            const topPx = baseMargins.top * mmToPx;
+            const bottomPx = baseMargins.bottom * mmToPx;
+            const leftPx = effectiveLeftMargin * mmToPx;
+            const rightPx = effectiveRightMargin * mmToPx;
+
             const pageStyle = `
                 width: ${widthPx}px;
                 height: ${heightPx}px;
@@ -1372,15 +1377,14 @@
                 font-size: ${font.fontSizePt}pt;
                 line-height: ${font.lineHeight};
                 letter-spacing: ${font.letterSpacingPx}px;
-                padding-top: ${baseMargins.top * mmToPx}px;
-                padding-bottom: ${baseMargins.bottom * mmToPx}px;
-                padding-left: ${effectiveLeftMargin * mmToPx}px;
-                padding-right: ${effectiveRightMargin * mmToPx}px;
             `;
 
-            const guideBoxStyle = `top:${baseMargins.top*mmToPx}px; bottom:${baseMargins.bottom*mmToPx}px; left:${effectiveLeftMargin*mmToPx}px; right:${effectiveRightMargin*mmToPx}px;`;
+            const guideBoxStyle = `top:${topPx}px; bottom:${bottomPx}px; left:${leftPx}px; right:${rightPx}px;`;
+            const editorBoxStyle = `top:${topPx}px; bottom:${bottomPx}px; left:${leftPx}px; right:${rightPx}px;`;
+            const headerStyle = `left:${leftPx}px; right:${rightPx}px; top:${Math.max(6, topPx / 2 - 8)}px;`;
+            const footerStyle = `left:${leftPx}px; right:${rightPx}px; bottom:${Math.max(6, bottomPx / 2 - 8)}px;`;
 
-            return { pageStyle, guideBoxStyle, widthPx, heightPx, mmToPx };
+            return { pageStyle, guideBoxStyle, editorBoxStyle, headerStyle, footerStyle, widthPx, heightPx, mmToPx };
         }
 
         function renderSpreadEditor() {
@@ -1402,23 +1406,21 @@
                 const idx = ws.activePageIndex || 0;
                 const page = ws.pages[idx] || ws.pages[0];
                 const pageHtml = page ? (page.htmlContent || window.formatTextToParagraphs(page.content)) : '';
-                const { pageStyle, guideBoxStyle } = generatePageCSS(idx);
+                const { pageStyle, guideBoxStyle, editorBoxStyle, headerStyle, footerStyle } = generatePageCSS(idx);
 
                 html += `
                     <div class="relative shadow-2xl rounded-sm transition-all overflow-hidden" style="${pageStyle}">
-                        ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0 m-auto" style="${guideBoxStyle}"></div>` : ''}
+                        ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${guideBoxStyle}"></div>` : ''}
                         
-                        <div class="h-full flex flex-col justify-between relative z-10">
-                            <div class="flex items-center justify-between text-[10px] opacity-40 select-none pb-2 border-b border-gray-300/30 font-sans">
-                                <span>${ws.title}</span>
-                                <span>Page ${idx + 1}</span>
-                            </div>
+                        <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${headerStyle}">
+                            <span>${ws.title}</span>
+                            <span>Page ${idx + 1}</span>
+                        </div>
 
-                            <div id="editor-page-${idx}" contenteditable="true" onfocus="handleFocus(${idx})" oninput="handleInput(${idx})" onpaste="handlePagePaste(event, ${idx})" class="book-editor-area flex-1 outline-none overflow-hidden py-2" style="word-break: break-all;">${pageHtml}</div>
+                        <div id="editor-page-${idx}" contenteditable="true" onfocus="handleFocus(${idx})" oninput="handleInput(${idx})" onpaste="handlePagePaste(event, ${idx})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${editorBoxStyle}; word-break: break-all;">${pageHtml}</div>
 
-                            <div class="text-center text-[10px] opacity-50 font-sans pt-2">
-                                - ${idx + 1} -
-                            </div>
+                        <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${footerStyle}">
+                            - ${idx + 1} -
                         </div>
                     </div>
                 `;
@@ -1440,37 +1442,33 @@
                 html += `
                     <div class="flex shadow-2xl rounded-sm overflow-hidden border border-gray-300/40">
                         <div class="relative spine-crease-left border-r border-gray-300/50" style="${leftCSS.pageStyle}">
-                            ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0 m-auto" style="${leftCSS.guideBoxStyle}"></div>` : ''}
+                            ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${leftCSS.guideBoxStyle}"></div>` : ''}
                             
-                            <div class="h-full flex flex-col justify-between relative z-10">
-                                <div class="flex items-center justify-between text-[10px] opacity-40 select-none pb-2 border-b border-gray-300/30 font-sans">
-                                    <span>${ws.title}</span>
-                                    <span>Page ${pair.leftIndex + 1}</span>
-                                </div>
+                            <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${leftCSS.headerStyle}">
+                                <span>${ws.title}</span>
+                                <span>Page ${pair.leftIndex + 1}</span>
+                            </div>
 
-                                <div id="editor-page-${pair.leftIndex}" contenteditable="true" onfocus="handleFocus(${pair.leftIndex})" oninput="handleInput(${pair.leftIndex})" onpaste="handlePagePaste(event, ${pair.leftIndex})" class="book-editor-area flex-1 outline-none overflow-hidden py-2" style="word-break: break-all;">${leftHtml}</div>
+                            <div id="editor-page-${pair.leftIndex}" contenteditable="true" onfocus="handleFocus(${pair.leftIndex})" oninput="handleInput(${pair.leftIndex})" onpaste="handlePagePaste(event, ${pair.leftIndex})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${leftCSS.editorBoxStyle}; word-break: break-all;">${leftHtml}</div>
 
-                                <div class="text-center text-[10px] opacity-50 font-sans pt-2">
-                                    - ${pair.leftIndex + 1} -
-                                </div>
+                            <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${leftCSS.footerStyle}">
+                                - ${pair.leftIndex + 1} -
                             </div>
                         </div>
 
                         ${rightPage ? `
                             <div class="relative spine-crease-right" style="${rightCSS.pageStyle}">
-                                ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0 m-auto" style="${rightCSS.guideBoxStyle}"></div>` : ''}
+                                ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${rightCSS.guideBoxStyle}"></div>` : ''}
                                 
-                                <div class="h-full flex flex-col justify-between relative z-10">
-                                    <div class="flex items-center justify-between text-[10px] opacity-40 select-none pb-2 border-b border-gray-300/30 font-sans">
-                                        <span>Page ${pair.rightIndex + 1}</span>
-                                        <span>${ws.title}</span>
-                                    </div>
+                                <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${rightCSS.headerStyle}">
+                                    <span>Page ${pair.rightIndex + 1}</span>
+                                    <span>${ws.title}</span>
+                                </div>
 
-                                    <div id="editor-page-${pair.rightIndex}" contenteditable="true" onfocus="handleFocus(${pair.rightIndex})" oninput="handleInput(${pair.rightIndex})" onpaste="handlePagePaste(event, ${pair.rightIndex})" class="book-editor-area flex-1 outline-none overflow-hidden py-2" style="word-break: break-all;">${rightHtml}</div>
+                                <div id="editor-page-${pair.rightIndex}" contenteditable="true" onfocus="handleFocus(${pair.rightIndex})" oninput="handleInput(${pair.rightIndex})" onpaste="handlePagePaste(event, ${pair.rightIndex})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${rightCSS.editorBoxStyle}; word-break: break-all;">${rightHtml}</div>
 
-                                    <div class="text-center text-[10px] opacity-50 font-sans pt-2">
-                                        - ${pair.rightIndex + 1} -
-                                    </div>
+                                <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${rightCSS.footerStyle}">
+                                    - ${pair.rightIndex + 1} -
                                 </div>
                             </div>
                         ` : `
