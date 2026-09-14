@@ -1760,49 +1760,104 @@
         }
 
         window.openExportModal = function() {
-            const ws = currentWS();
-            const fullText = ws.pages.map((p, idx) => {
-                let cleanText = p.content || '';
-                if(p.htmlContent) {
-                    const tempDiv = document.createElement('div');
-                    tempDiv.innerHTML = p.htmlContent;
-                    cleanText = window.getParagraphsFromElement(tempDiv);
+            try {
+                if (typeof saveCurrentPairContent === 'function') {
+                    saveCurrentPairContent();
                 }
-                return `[ ${idx + 1} 페이지 ]\n\n${cleanText}\n`;
-            }).join('\n----------------------------------------\n\n');
-            
+            } catch (e) {
+                console.warn("현재 페이지 저장 중 문제가 발생했으나 내보내기를 계속 진행합니다.", e);
+            }
+
+            const ws = currentWS();
+            if (!ws || !ws.pages) {
+                showToast("원고 데이터를 불러올 수 없습니다.", "error");
+                return;
+            }
+
+            const extractText = (content) => {
+                if (!content) return '';
+                const tmp = document.createElement("div");
+                tmp.innerHTML = content;
+                return tmp.innerText || tmp.textContent || '';
+            };
+
+            const fullText = ws.pages.map((p, idx) => {
+                const cleanText = extractText(p?.htmlContent || p?.content || '').trim();
+                return `[ ${idx + 1} 페이지 ]\n\n${cleanText}`;
+            }).join('\n\n----------------------------------------\n\n');
+
             const textArea = document.getElementById('export-text-area');
-            if (textArea) textArea.value = fullText;
-            document.getElementById('modal-export').classList.remove('hidden');
+            if (textArea) {
+                textArea.value = fullText;
+            }
+            
+            const modal = document.getElementById('modal-export');
+            if (modal) {
+                modal.classList.remove('hidden');
+            } else {
+                showToast("내보내기 창을 찾을 수 없습니다.", "error");
+            }
         };
 
         window.closeExportModal = function() {
             document.getElementById('modal-export').classList.add('hidden');
         };
 
-        window.copyExportText = function() {
+        window.copyExportText = async function() {
             const textArea = document.getElementById('export-text-area');
-            if (!textArea) return;
-            textArea.select();
-            document.execCommand('copy');
-            showToast("원고가 클립보드 복사되었습니다.", "success");
+            if (!textArea || !textArea.value) return;
+            
+            try {
+                if (navigator.clipboard && window.isSecureContext) {
+                    await navigator.clipboard.writeText(textArea.value);
+                    showToast("원고가 클립보드에 복사되었습니다.", "success");
+                } else {
+                    textArea.select();
+                    document.execCommand('copy');
+                    window.getSelection().removeAllRanges();
+                    showToast("원고가 클립보드에 복사되었습니다.", "success");
+                }
+            } catch (err) {
+                console.error("복사 실패:", err);
+                showToast("클립보드 복사를 지원하지 않는 환경입니다.", "error");
+            }
         };
 
         window.downloadAsTextFile = function() {
             const ws = currentWS();
             const textArea = document.getElementById('export-text-area');
             const text = textArea ? textArea.value : '';
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = `${ws.title || '소설_원고'}.txt`;
-            document.body.appendChild(a);
-            a.click();
-            document.body.removeChild(a);
-            URL.revokeObjectURL(url);
-            showToast("원고 파일(.txt)이 다운로드되었습니다.", "success");
+            
+            if (!text.trim()) {
+                showToast("내보낼 원고 내용이 없습니다.", "warning");
+                return;
+            }
+
+            try {
+                const blob = new Blob([text], { type: 'text/plain;charset=utf-8' });
+                const url = URL.createObjectURL(blob);
+                const a = document.createElement('a');
+                a.style.display = 'none';
+                a.href = url;
+                
+                const safeTitle = (ws.title || '소설_원고').replace(/[\\\/\:\*\?\"\<\>\|]/g, '_');
+                a.download = `${safeTitle}.txt`;
+                
+                document.body.appendChild(a);
+                a.click();
+                
+                setTimeout(() => {
+                    document.body.removeChild(a);
+                    URL.revokeObjectURL(url);
+                }, 100);
+                
+                showToast("원고 파일(.txt)이 안전하게 다운로드되었습니다.", "success");
+            } catch (e) {
+                console.error("다운로드 실패:", e);
+                showToast("파일 다운로드 중 오류가 발생했습니다.", "error");
+            }
         };
+
 
         window.adjustScale = function(delta) {
             window.state.scale = Math.max(0.5, Math.min(1.6, window.state.scale + delta));
