@@ -62,13 +62,18 @@
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
 
     <style>
-        /* Custom Scrollbar Styling */
         ::-webkit-scrollbar { width: 6px; height: 6px; }
         ::-webkit-scrollbar-track { background: rgba(0, 0, 0, 0.05); }
         ::-webkit-scrollbar-thumb { background: rgba(0, 0, 0, 0.2); border-radius: 4px; }
         ::-webkit-scrollbar-thumb:hover { background: rgba(0, 0, 0, 0.3); }
 
-        /* Long press hold progress animation */
+        .spine-crease-left {
+            background: linear-gradient(to right, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 93%, rgba(0,0,0,0.12) 100%);
+        }
+        .spine-crease-right {
+            background: linear-gradient(to left, rgba(0,0,0,0) 0%, rgba(0,0,0,0.03) 93%, rgba(0,0,0,0.12) 100%);
+        }
+
         @keyframes pulse-ring {
             0% { transform: scale(0.95); opacity: 0.8; }
             50% { transform: scale(1.05); opacity: 1; }
@@ -81,13 +86,16 @@
             color: #dc2626 !important;
         }
 
-        /* Mind map grid canvas */
+        .margin-guide-box {
+            border: 1px dashed rgba(59, 130, 246, 0.45);
+            pointer-events: none;
+        }
+
         .mindmap-bg {
             background-image: radial-gradient(circle, rgba(156, 163, 175, 0.25) 1px, transparent 1px);
             background-size: 24px 24px;
         }
 
-        /* Paragraph Indentation & Spacing Engine */
         .book-editor-area p, .book-editor-area div {
             margin-top: 0px !important;
             margin-bottom: var(--para-spacing, 0px) !important;
@@ -95,9 +103,8 @@
             line-height: inherit;
         }
         .book-editor-area p:empty::before, .book-editor-area div:empty::before {
-            content: "\00a0"; /* Non-breaking space for empty paragraphs */
+            content: "\00a0";
         }
-        /* 개별 문단 들여쓰기 제거용 클래스 */
         .book-editor-area p.no-indent, .book-editor-area div.no-indent {
             text-indent: 0 !important;
         }
@@ -107,6 +114,7 @@
         .mode-connect-active .mindmap-node-card { cursor: crosshair !important; }
         .connection-group:hover circle { fill: #dc2626 !important; transform: scale(1.25); transform-origin: center; }
         .connection-group:hover line:first-child { stroke: #ef4444 !important; stroke-width: 3.5px !important; }
+
         .accordion-content { transition: max-height 0.25s ease-in-out, opacity 0.2s ease-in-out; }
     </style>
 </head>
@@ -177,10 +185,15 @@
         </div>
     </header>
 
+    <!-- MAIN WORKSPACE CONTENT CONTAINER -->
     <main class="flex-1 flex overflow-hidden relative">
-        <!-- TAB 1: STUDIO -->
+
+        <!-- TAB 1: STUDIO (BOOK LAYOUT & TYPOGRAPHY) -->
         <div id="view-studio" class="flex-1 flex w-full h-full relative">
+
+            <!-- LEFT CONTROL PANEL -->
             <aside id="sidebar-panel" class="w-80 bg-white dark:bg-gray-800 border-r border-gray-200 dark:border-gray-700 flex flex-col shrink-0 z-20 transition-all duration-300">
+                
                 <div class="p-3 border-b border-gray-200 dark:border-gray-700 flex items-center justify-between bg-gray-50/50 dark:bg-gray-800/50">
                     <span class="text-xs font-bold text-gray-600 dark:text-gray-300 uppercase tracking-wider">
                         <i class="fa-solid fa-sliders mr-1 text-brand-500"></i> 조판 & 서식 설정
@@ -189,13 +202,16 @@
                         <button onclick="resetBookSettings()" title="설정 초기화" class="px-1.5 py-0.5 text-[11px] text-gray-400 hover:text-gray-600 dark:hover:text-gray-200">
                             <i class="fa-solid fa-rotate-right mr-1"></i>초기화
                         </button>
-                        <button onclick="toggleSidebar()" title="사이드바 접기" class="px-1.5 py-0.5 text-[11px] bg-gray-200/50 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded transition">
-                            <i class="fa-solid fa-chevron-left mr-1"></i>접기
+                        <button onclick="toggleSidebar()" title="사이드바 접기" class="px-1.5 py-0.5 text-[11px] bg-gray-200/50 dark:bg-gray-700/50 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-600 dark:text-gray-300 rounded transition flex items-center space-x-1">
+                            <i class="fa-solid fa-chevron-left text-[10px]"></i>
+                            <span>접기</span>
                         </button>
                     </div>
                 </div>
 
                 <div class="flex-1 overflow-y-auto divide-y divide-gray-100 dark:divide-gray-700/60 text-xs">
+
+                    <!-- ACCORDION SECTION 1 -->
                     <div class="accordion-item">
                         <button onclick="toggleAccordion('acc-preset')" class="w-full p-3 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-left">
                             <span class="flex items-center space-x-2">
@@ -212,6 +228,7 @@
                                 <option value="pocket">문고판 (105 x 148 mm) - 손안의 책</option>
                                 <option value="custom">직접 입력 (Custom Size)</option>
                             </select>
+
                             <div id="custom-size-box" class="grid grid-cols-2 gap-2 pt-1 hidden">
                                 <div>
                                     <span class="text-[11px] text-gray-400">가로 (Width mm)</span>
@@ -225,6 +242,7 @@
                         </div>
                     </div>
 
+                    <!-- ACCORDION SECTION 2 -->
                     <div class="accordion-item">
                         <button onclick="toggleAccordion('acc-view')" class="w-full p-3 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-left">
                             <span class="flex items-center space-x-2">
@@ -237,16 +255,17 @@
                             <div class="grid grid-cols-2 gap-2">
                                 <button id="btn-mode-single" onclick="setSpreadMode(false)" class="p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300">
                                     <i class="fa-solid fa-file-lines text-base"></i>
-                                    <span>자동 흐름</span>
+                                    <span>단면 보기</span>
                                 </button>
-                                <button id="btn-mode-spread" onclick="setSpreadMode(true)" class="p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-gray-200 dark:border-gray-600 text-gray-500 opacity-50 cursor-not-allowed">
+                                <button id="btn-mode-spread" onclick="setSpreadMode(true)" class="p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-gray-200 dark:border-gray-600 text-gray-500">
                                     <i class="fa-solid fa-book-open text-base"></i>
-                                    <span>(양면보기 비활성)</span>
+                                    <span>양면 펼침</span>
                                 </button>
                             </div>
                         </div>
                     </div>
 
+                    <!-- ACCORDION SECTION 3 -->
                     <div class="accordion-item">
                         <button onclick="toggleAccordion('acc-margin')" class="w-full p-3 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-left">
                             <span class="flex items-center space-x-2">
@@ -256,6 +275,15 @@
                             <i id="acc-margin-icon" class="fa-solid fa-chevron-down text-gray-400 text-xs transition-transform duration-200"></i>
                         </button>
                         <div id="acc-margin" class="accordion-content p-3 pt-0 space-y-3">
+                            <div class="flex items-center justify-between">
+                                <span class="text-[11px] text-gray-500 dark:text-gray-400">인쇄 영역 가이드</span>
+                                <label class="inline-flex items-center cursor-pointer">
+                                    <input type="checkbox" id="setting-margin-guide" onchange="toggleMarginGuide(this.checked)" checked class="sr-only peer">
+                                    <div class="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-600 relative"></div>
+                                    <span class="ml-1 text-[10px] text-gray-400">표시</span>
+                                </label>
+                            </div>
+
                             <div class="grid grid-cols-2 gap-2 font-mono">
                                 <div>
                                     <span class="text-[10px] text-gray-400">상단 (Top mm)</span>
@@ -277,6 +305,7 @@
                         </div>
                     </div>
 
+                    <!-- ACCORDION SECTION 4 -->
                     <div class="accordion-item">
                         <button onclick="toggleAccordion('acc-typo')" class="w-full p-3 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-left">
                             <span class="flex items-center space-x-2">
@@ -295,6 +324,7 @@
                                     <option value="'Noto Sans KR', sans-serif">Noto Sans KR (고딕)</option>
                                 </select>
                             </div>
+
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <div class="flex justify-between text-[11px]">
@@ -303,6 +333,7 @@
                                     </div>
                                     <input type="range" id="setting-font-size" min="8" max="18" step="0.5" value="10.5" oninput="updateTypographySettings()" class="w-full accent-brand-600 mt-1">
                                 </div>
+
                                 <div>
                                     <div class="flex justify-between text-[11px]">
                                         <span class="text-gray-400">줄 간격</span>
@@ -311,6 +342,7 @@
                                     <input type="range" id="setting-line-height" min="1.0" max="3.0" step="0.05" value="1.75" oninput="updateTypographySettings()" class="w-full accent-brand-600 mt-1">
                                 </div>
                             </div>
+
                             <div>
                                 <div class="flex justify-between text-[11px]">
                                     <span class="text-gray-400">자간 (Letter Spacing)</span>
@@ -318,6 +350,7 @@
                                 </div>
                                 <input type="range" id="setting-letter-spacing" min="-2" max="5" step="0.5" value="0" oninput="updateTypographySettings()" class="w-full accent-brand-600 mt-1">
                             </div>
+
                             <div class="grid grid-cols-2 gap-2">
                                 <div>
                                     <div class="flex justify-between text-[11px]">
@@ -326,14 +359,16 @@
                                     </div>
                                     <input type="range" id="setting-text-indent" min="0" max="3" step="0.5" value="1" oninput="updateTypographySettings()" class="w-full accent-brand-600 mt-1">
                                 </div>
+
                                 <div>
                                     <div class="flex justify-between text-[11px]">
-                                        <span class="text-gray-400">내려쓰기/문단 간격</span>
+                                        <span class="text-gray-400">문단 간격</span>
                                         <span id="label-paragraph-spacing" class="font-mono font-bold text-brand-600">0px</span>
                                     </div>
                                     <input type="range" id="setting-paragraph-spacing" min="0" max="30" step="1" value="0" oninput="updateTypographySettings()" class="w-full accent-brand-600 mt-1">
                                 </div>
                             </div>
+
                             <div class="grid grid-cols-2 gap-2 pt-1">
                                 <div>
                                     <span class="text-[11px] text-gray-400 block mb-1">글자 색상</span>
@@ -342,6 +377,7 @@
                                         <span id="label-text-color" class="font-mono text-[10px] text-gray-500">#111827</span>
                                     </div>
                                 </div>
+
                                 <div>
                                     <span class="text-[11px] text-gray-400 block mb-1">종이 바탕색</span>
                                     <div class="flex items-center space-x-1">
@@ -355,6 +391,7 @@
                         </div>
                     </div>
 
+                    <!-- ACCORDION SECTION 5 -->
                     <div class="accordion-item">
                         <button onclick="toggleAccordion('acc-stats')" class="w-full p-3 flex items-center justify-between font-bold text-gray-700 dark:text-gray-200 hover:bg-gray-50 dark:hover:bg-gray-750 transition text-left">
                             <span class="flex items-center space-x-2">
@@ -368,33 +405,32 @@
                                 <div class="grid grid-cols-2 gap-2 text-[11px]">
                                     <div class="bg-white dark:bg-gray-800 p-2 rounded shadow-xs">
                                         <span class="text-gray-400 block">줄당 자수 (예상)</span>
-                                        <span id="stat-chars-per-line" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 0 자</span>
+                                        <span id="stat-chars-per-line" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 32 자</span>
                                     </div>
                                     <div class="bg-white dark:bg-gray-800 p-2 rounded shadow-xs">
                                         <span class="text-gray-400 block">페이지당 줄 수</span>
-                                        <span id="stat-lines-per-page" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 0 줄</span>
+                                        <span id="stat-lines-per-page" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 22 줄</span>
                                     </div>
                                     <div class="bg-white dark:bg-gray-800 p-2 rounded shadow-xs">
                                         <span class="text-gray-400 block">페이지당 자수</span>
-                                        <span id="stat-chars-per-page" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 0 자</span>
+                                        <span id="stat-chars-per-page" class="font-bold text-sm text-gray-800 dark:text-gray-100 font-mono">약 700 자</span>
                                     </div>
                                     <div class="bg-white dark:bg-gray-800 p-2 rounded shadow-xs">
                                         <span class="text-gray-400 block">200자 원고지 환산</span>
                                         <span id="stat-manuscript-pages" class="font-bold text-sm text-brand-600 font-mono">0 매</span>
                                     </div>
                                 </div>
-                                <div class="text-[10px] text-gray-400 pt-1 flex justify-between">
-                                    <span>전체 글자: <strong id="stat-total-chars" class="text-gray-600 dark:text-gray-300 font-mono">0</strong>자</span>
-                                    <span>단어: <strong id="stat-total-words" class="text-gray-600 dark:text-gray-300 font-mono">0</strong>개</span>
-                                </div>
                             </div>
                         </div>
                     </div>
+
                 </div>
             </aside>
 
-            <button id="btn-expand-sidebar" onclick="toggleSidebar()" class="absolute left-0 top-1/2 -translate-y-1/2 z-30 hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-0 rounded-r-xl py-4 px-2 shadow-lg text-gray-400 hover:text-brand-600 transition-all">
-                <i class="fa-solid fa-chevron-right"></i>
+            <!-- SIDEBAR EXPAND BUTTON (화살표 포함 펼치기 버튼) -->
+            <button id="btn-expand-sidebar" onclick="toggleSidebar()" class="absolute left-0 top-1/2 -translate-y-1/2 z-30 hidden bg-white dark:bg-gray-800 border border-gray-200 dark:border-gray-700 border-l-0 rounded-r-xl py-4 px-2.5 shadow-lg text-gray-500 hover:text-brand-600 transition-all flex items-center space-x-1 font-semibold text-xs" title="설정 패널 펼치기">
+                <i class="fa-solid fa-chevron-right text-xs"></i>
+                <span class="[writing-mode:vertical-lr] tracking-wider">설정 열기</span>
             </button>
 
             <!-- CENTER CANVAS AREA -->
@@ -417,7 +453,7 @@
                         </button>
                         <button onclick="addNewPage()" class="px-3 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold flex items-center space-x-1 shadow-sm transition">
                             <i class="fa-solid fa-plus text-[10px]"></i>
-                            <span>새 페이지 (안내)</span>
+                            <span>새 페이지 추가</span>
                         </button>
                     </div>
 
@@ -429,10 +465,8 @@
                     </div>
                 </div>
 
-                <!-- VIRTUAL BOOK SHEET SCROLLABLE VIEWPORT -->
-                <div id="book-viewport" class="flex-1 overflow-auto p-8 flex items-center justify-start">
+                <div id="book-viewport" class="flex-1 overflow-auto p-8 flex items-center justify-center">
                     <div id="book-sheet-container" class="transition-all duration-200 ease-out flex items-center justify-center drop-shadow-2xl my-auto">
-                        <!-- Dynamic Auto-flowing Pages Here -->
                     </div>
                 </div>
 
@@ -447,157 +481,104 @@
                     </div>
                 </div>
 
-                <div class="h-6 bg-gray-100 dark:bg-gray-800 border-t border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between text-[11px] text-gray-500 dark:text-gray-400 shrink-0">
-                    <div class="flex items-center space-x-3">
-                        <span id="info-dimension-badge">신국판 (152 × 225 mm)</span>
-                        <span>•</span>
-                        <span id="info-spread-badge">단면 자동 흐름(Reflow) 모드</span>
-                    </div>
-                </div>
             </div>
         </div>
 
-        <!-- TAB 2: STORY MIND MAP STUDIO (ENHANCED ENGINE) -->
+        <!-- TAB 2: MIND MAP STUDIO -->
         <div id="view-mindmap" class="flex-1 flex flex-col w-full h-full hidden bg-gray-950 relative overflow-hidden">
             <div class="h-14 bg-white dark:bg-gray-800 border-b border-gray-200 dark:border-gray-700 px-4 flex items-center justify-between shrink-0 z-20 shadow-sm">
                 <div class="flex items-center space-x-1.5 overflow-x-auto py-1">
                     <span class="font-bold text-xs text-gray-700 dark:text-gray-200 mr-1 shrink-0">
                         <i class="fa-solid fa-plus text-brand-500 mr-1"></i>노드 추가:
                     </span>
-                    <button onclick="addMindMapNode('character')" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-md text-xs font-semibold shrink-0 flex items-center space-x-1 transition"><i class="fa-solid fa-user text-[10px]"></i><span>인물</span></button>
-                    <button onclick="addMindMapNode('event')" class="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 rounded-md text-xs font-semibold shrink-0 flex items-center space-x-1 transition"><i class="fa-solid fa-bolt text-[10px]"></i><span>사건</span></button>
-                    <button onclick="addMindMapNode('plot')" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-md text-xs font-semibold shrink-0 flex items-center space-x-1 transition"><i class="fa-solid fa-route text-[10px]"></i><span>플롯</span></button>
-                    <button onclick="addMindMapNode('clue')" class="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-md text-xs font-semibold shrink-0 flex items-center space-x-1 transition"><i class="fa-solid fa-key text-[10px]"></i><span>복선</span></button>
-                    <button onclick="addMindMapNode('setting')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-md text-xs font-semibold shrink-0 flex items-center space-x-1 transition"><i class="fa-solid fa-compass text-[10px]"></i><span>배경</span></button>
-                </div>
-
-                <div class="flex items-center space-x-3 shrink-0">
-                    <div class="flex items-center bg-gray-100 dark:bg-gray-700/80 p-1 rounded-lg border border-gray-200 dark:border-gray-600 text-xs font-bold shadow-inner">
-                        <button id="mm-mode-pan" onclick="setMindMapMode('pan')" class="px-3 py-1 rounded-md transition flex items-center space-x-1.5 bg-brand-600 text-white shadow"><i class="fa-solid fa-hand"></i><span>캔버스 이동</span></button>
-                        <button id="mm-mode-node" onclick="setMindMapMode('node')" class="px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300"><i class="fa-solid fa-up-down-left-right"></i><span>노드 이동 모드</span></button>
-                        <button id="mm-mode-connect" onclick="setMindMapMode('connect')" class="px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300"><i class="fa-solid fa-link"></i><span>노드 연결</span></button>
-                    </div>
-
-                    <div class="flex items-center space-x-1.5 bg-gray-100 dark:bg-gray-700/80 p-1 rounded-lg border border-gray-200 dark:border-gray-600">
-                        <button onclick="zoomMindMap(-0.1)" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"><i class="fa-solid fa-minus text-[10px]"></i></button>
-                        <span id="mm-zoom-label" class="text-[11px] font-mono font-bold w-10 text-center text-gray-700 dark:text-gray-200">100%</span>
-                        <button onclick="zoomMindMap(0.1)" class="w-6 h-6 flex items-center justify-center hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-600 dark:text-gray-300"><i class="fa-solid fa-plus text-[10px]"></i></button>
-                        <button onclick="resetMindMapTransform()" title="뷰 초기화" class="p-1 hover:bg-gray-200 dark:hover:bg-gray-600 rounded text-gray-400 hover:text-gray-700 dark:hover:text-gray-200 text-xs"><i class="fa-solid fa-rotate-left"></i></button>
-                    </div>
-
-                    <button onclick="clearMindMap()" class="p-1.5 text-gray-400 hover:text-red-500 rounded transition" title="마인드맵 초기화"><i class="fa-solid fa-trash-can"></i></button>
+                    <button onclick="addMindMapNode('character')" class="px-2.5 py-1 bg-amber-500/10 hover:bg-amber-500/20 text-amber-600 dark:text-amber-400 border border-amber-500/30 rounded-md text-xs font-semibold shrink-0">인물</button>
+                    <button onclick="addMindMapNode('event')" class="px-2.5 py-1 bg-blue-500/10 hover:bg-blue-500/20 text-blue-600 dark:text-blue-400 border border-blue-500/30 rounded-md text-xs font-semibold shrink-0">사건</button>
+                    <button onclick="addMindMapNode('plot')" class="px-2.5 py-1 bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-600 dark:text-emerald-400 border border-emerald-500/30 rounded-md text-xs font-semibold shrink-0">플롯</button>
+                    <button onclick="addMindMapNode('clue')" class="px-2.5 py-1 bg-purple-500/10 hover:bg-purple-500/20 text-purple-600 dark:text-purple-400 border border-purple-500/30 rounded-md text-xs font-semibold shrink-0">복선</button>
+                    <button onclick="addMindMapNode('setting')" class="px-2.5 py-1 bg-rose-500/10 hover:bg-rose-500/20 text-rose-600 dark:text-rose-400 border border-rose-500/30 rounded-md text-xs font-semibold shrink-0">배경</button>
                 </div>
             </div>
-
             <div id="mindmap-canvas" class="flex-1 w-full h-full relative mindmap-bg overflow-hidden touch-none select-none mode-pan-active cursor-grab">
                 <div id="mindmap-transform-layer" class="absolute inset-0 origin-top-left transition-transform duration-75">
                     <svg id="mindmap-svg-layer" class="absolute inset-0 w-[5000px] h-[5000px] pointer-events-none z-10">
-                        <defs>
-                            <marker id="arrow" viewBox="0 0 10 10" refX="22" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#3b82f6"/></marker>
-                            <marker id="arrow-preview" viewBox="0 0 10 10" refX="10" refY="5" markerWidth="6" markerHeight="6" orient="auto-start-reverse"><path d="M 0 0 L 10 5 L 0 10 z" fill="#f59e0b"/></marker>
-                        </defs>
                         <g id="svg-connections-group"></g>
-                        <line id="svg-preview-line" x1="0" y1="0" x2="0" y2="0" stroke="#f59e0b" stroke-width="2" stroke-dasharray="4 4" marker-end="url(#arrow-preview)" class="hidden" />
                     </svg>
                     <div id="mindmap-nodes-layer" class="absolute inset-0 z-20 pointer-events-none"></div>
                 </div>
-            </div>
-
-            <div id="mm-status-banner" class="absolute bottom-4 left-4 bg-gray-900/90 backdrop-blur-md text-gray-200 text-xs px-3.5 py-2 rounded-xl border border-gray-700 shadow-xl pointer-events-none flex items-center space-x-2 z-30">
-                <i class="fa-solid fa-circle-info text-brand-400"></i>
-                <span id="mm-status-text"><strong>🖐️ 캔버스 이동 모드:</strong> 바탕화면이나 노드 위를 잡고 드래그하여 화면 위치를 이동하세요. (노드는 고정됩니다)</span>
             </div>
         </div>
 
     </main>
 
-    <!-- RENAME WORKSPACE MODAL -->
+    <!-- MODALS -->
     <div id="modal-rename-workspace" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
         <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-sm w-full p-5 space-y-4">
-            <div class="flex items-center space-x-2 text-brand-600 dark:text-brand-400 font-bold text-sm"><i class="fa-solid fa-pen-to-square"></i><span>원고(작품) 제목 변경</span></div>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">새 작품 제목</label>
-                <input type="text" id="rename-ws-title-input" onkeyup="if(event.key === 'Enter') confirmRenameWorkspace()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500 font-medium text-gray-800 dark:text-gray-100">
-            </div>
-            <div class="flex items-center justify-end space-x-2 pt-1">
-                <button onclick="closeRenameWorkspaceModal()" class="px-3.5 py-1.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold transition">취소</button>
-                <button onclick="confirmRenameWorkspace()" class="px-3.5 py-1.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold transition shadow-sm">제목 저장</button>
+            <h3 class="font-bold text-sm">원고(작품) 제목 변경</h3>
+            <input type="text" id="rename-ws-title-input" class="w-full bg-gray-50 dark:bg-gray-700 border rounded p-2 text-xs">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeRenameWorkspaceModal()" class="px-3 py-1 bg-gray-100 rounded text-xs">취소</button>
+                <button onclick="confirmRenameWorkspace()" class="px-3 py-1 bg-brand-600 text-white rounded text-xs">저장</button>
             </div>
         </div>
     </div>
 
-    <!-- NEW WORKSPACE MODAL -->
+    <div id="modal-delete-page" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-5 space-y-4">
+            <h3 class="font-bold text-sm text-red-600">페이지 삭제</h3>
+            <p id="delete-page-modal-text" class="text-xs"></p>
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeDeletePageModal()" class="px-3 py-1 bg-gray-100 rounded text-xs">취소</button>
+                <button id="confirm-delete-page-btn" class="px-3 py-1 bg-red-600 text-white rounded text-xs">삭제</button>
+            </div>
+        </div>
+    </div>
+
     <div id="modal-workspace" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-md w-full p-6 space-y-4">
-            <h3 class="font-bold text-base text-gray-900 dark:text-gray-100">새 소설 워크스페이스 만들기</h3>
-            <div>
-                <label class="block text-xs font-semibold text-gray-600 dark:text-gray-300 mb-1">작품/원고 제목</label>
-                <input type="text" id="new-ws-title" placeholder="예: 달빛 도서관의 비밀" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500">
-            </div>
-            <div class="flex justify-end space-x-2 pt-2">
-                <button onclick="closeWorkspaceModal()" class="px-4 py-2 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold">취소</button>
-                <button onclick="createNewWorkspace()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-semibold shadow-sm">생성하기</button>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-md w-full p-6 space-y-4">
+            <h3 class="font-bold text-base">새 소설 워크스페이스</h3>
+            <input type="text" id="new-ws-title" placeholder="제목" class="w-full bg-gray-50 dark:bg-gray-700 border rounded p-2 text-xs">
+            <div class="flex justify-end space-x-2">
+                <button onclick="closeWorkspaceModal()" class="px-3 py-1 bg-gray-100 rounded text-xs">취소</button>
+                <button onclick="createNewWorkspace()" class="px-3 py-1 bg-brand-600 text-white rounded text-xs">생성</button>
             </div>
         </div>
     </div>
 
-    <!-- AUTH MODAL -->
     <div id="modal-auth" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-sm w-full p-6 space-y-4">
-            <div class="text-center space-y-1">
-                <h3 id="auth-modal-title" class="font-bold text-base text-gray-900 dark:text-gray-100">계정 로그인 및 회원가입</h3>
-                <p id="auth-modal-desc" class="text-xs text-gray-500 dark:text-gray-400">이메일 계정으로 로그인하여 내 원고를 안전하게 보관하세요.</p>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-sm w-full p-6 space-y-4">
+            <h3 class="font-bold text-base" id="auth-modal-title">로그인 및 회원가입</h3>
+            <input type="email" id="auth-email-input" placeholder="이메일" class="w-full bg-gray-50 dark:bg-gray-700 border rounded p-2 text-xs">
+            <input type="password" id="auth-password-input" placeholder="비밀번호 (6자 이상)" class="w-full bg-gray-50 dark:bg-gray-700 border rounded p-2 text-xs">
+            <div id="logged-out-panel" class="space-y-2">
+                <button onclick="handleEmailLogin()" class="w-full py-2 bg-brand-600 text-white rounded text-xs font-bold">로그인</button>
+                <button onclick="handleEmailRegister()" class="w-full py-2 bg-gray-100 text-gray-800 rounded text-xs font-bold">회원가입</button>
             </div>
-            <div class="space-y-3 pt-2">
-                <div>
-                    <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">이메일 주소</label>
-                    <input type="email" id="auth-email-input" placeholder="example@email.com" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-gray-800 dark:text-gray-100">
-                </div>
-                <div>
-                    <label class="block text-[11px] font-semibold text-gray-600 dark:text-gray-300 mb-1">비밀번호 (6자리 이상)</label>
-                    <input type="password" id="auth-password-input" placeholder="••••••••" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded-lg p-2.5 text-xs outline-none focus:ring-2 focus:ring-brand-500 text-gray-800 dark:text-gray-100">
-                </div>
-                <div id="logged-in-panel" class="hidden space-y-2 text-center pt-2">
-                    <p id="current-user-email-display" class="text-xs font-bold text-brand-600 dark:text-brand-400"></p>
-                    <button onclick="handleLogout()" class="w-full py-2 bg-red-600 hover:bg-red-700 text-white rounded-lg text-xs font-bold transition shadow-sm">로그아웃하기</button>
-                </div>
-                <div id="logged-out-panel" class="space-y-2 pt-2">
-                    <button onclick="handleEmailLogin()" class="w-full py-2.5 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-md transition flex items-center justify-center space-x-2"><i class="fa-solid fa-right-to-bracket"></i><span>로그인하기</span></button>
-                    <button onclick="handleEmailRegister()" class="w-full py-2.5 bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-bold transition flex items-center justify-center space-x-2"><i class="fa-solid fa-user-plus"></i><span>회원가입하기</span></button>
-                </div>
+            <div id="logged-in-panel" class="hidden space-y-2 text-center">
+                <p id="current-user-email-display" class="text-xs font-bold text-brand-600"></p>
+                <button onclick="handleLogout()" class="w-full py-2 bg-red-600 text-white rounded text-xs font-bold">로그아웃</button>
             </div>
-            <div class="flex justify-center pt-2 border-t border-gray-100 dark:border-gray-700">
-                <button onclick="closeAuthModal()" class="text-xs text-gray-400 hover:text-gray-600">닫기</button>
-            </div>
+            <button onclick="closeAuthModal()" class="w-full text-xs text-gray-400 pt-2">닫기</button>
         </div>
     </div>
 
-    <!-- EXPORT MANUSCRIPT MODAL -->
     <div id="modal-export" class="fixed inset-0 bg-black/60 backdrop-blur-xs flex items-center justify-center z-50 hidden p-4">
-        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl border border-gray-200 dark:border-gray-700 max-w-lg w-full p-6 space-y-4">
-            <div class="flex items-center justify-between border-b border-gray-200 dark:border-gray-700 pb-3">
-                <h3 class="font-bold text-base text-gray-900 dark:text-gray-100 flex items-center space-x-2"><i class="fa-solid fa-file-export text-brand-500"></i><span>전체 원고 내보내기</span></h3>
-                <button onclick="closeExportModal()" class="text-gray-400 hover:text-gray-600 dark:hover:text-gray-200"><i class="fa-solid fa-xmark"></i></button>
-            </div>
-            <p class="text-xs text-gray-500 dark:text-gray-400">현재 워크스페이스의 모든 본문 내용을 내보냅니다.</p>
-            <textarea id="export-text-area" readonly class="w-full h-48 bg-gray-50 dark:bg-gray-900 border border-gray-200 dark:border-gray-700 rounded-lg p-3 text-xs font-mono outline-none resize-none text-gray-800 dark:text-gray-200 select-text"></textarea>
-            <div class="flex items-center justify-between pt-2">
-                <button onclick="copyExportText()" class="px-3.5 py-2 bg-gray-100 dark:bg-gray-700 hover:bg-gray-200 dark:hover:bg-gray-600 text-gray-700 dark:text-gray-200 rounded-lg text-xs font-semibold flex items-center space-x-1.5 transition"><i class="fa-regular fa-copy"></i><span>클립보드 복사</span></button>
-                <div class="flex items-center space-x-2">
-                    <button onclick="downloadAsTextFile()" class="px-4 py-2 bg-brand-600 hover:bg-brand-700 text-white rounded-lg text-xs font-bold shadow-md transition flex items-center space-x-1.5"><i class="fa-solid fa-download"></i><span>.txt 파일 다운로드</span></button>
-                </div>
+        <div class="bg-white dark:bg-gray-800 rounded-xl shadow-2xl max-w-lg w-full p-6 space-y-4">
+            <h3 class="font-bold text-base">원고 내보내기</h3>
+            <textarea id="export-text-area" readonly class="w-full h-48 bg-gray-50 dark:bg-gray-900 border rounded p-3 text-xs font-mono"></textarea>
+            <div class="flex justify-between">
+                <button onclick="copyExportText()" class="px-3 py-2 bg-gray-100 rounded text-xs">클립보드 복사</button>
+                <button onclick="downloadAsTextFile()" class="px-4 py-2 bg-brand-600 text-white rounded text-xs font-bold">파일 다운로드</button>
             </div>
         </div>
     </div>
 
-    <!-- TOAST NOTIFICATION CONTAINER -->
     <div id="toast-container" class="fixed top-16 right-4 z-50 space-y-2 pointer-events-none"></div>
 
-    <!-- JAVASCRIPT APPLICATION CORE -->
+    <!-- SCRIPT -->
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'bookcraft-studio-app';
         let firebaseApp, db, auth;
@@ -620,15 +601,37 @@
                     title: '나의 첫 번째 소설 원고',
                     activePageIndex: 0,
                     activePairIndex: 0,
-                    book: { presetKey: 'sin-guk', widthMM: 152, heightMM: 225, isSpread: false, showMarginGuide: true, margins: { top: 20, bottom: 22, left: 18, right: 18 } },
-                    typography: { fontFamily: "'Gowun Batang', serif", fontSizePt: 10.5, lineHeight: 1.75, letterSpacingPx: 0, textIndentEm: 1.0, paragraphSpacingPx: 0, textColor: '#111827', paperColor: '#fdfbf7' },
-                    content: '<p>여기에 소설의 첫 문장을 시작해 보세요.</p><p>바람이 서늘하게 불어오는 가을밤, 서재 창문 너머로 오래된 도서관의 불빛이 아른거렸다. 이제는 글을 꽉 채우면 알아서 2페이지, 3페이지로 종이가 늘어납니다.</p>',
+                    book: {
+                        presetKey: 'sin-guk',
+                        widthMM: 152,
+                        heightMM: 225,
+                        isSpread: false,
+                        showMarginGuide: true,
+                        margins: { top: 20, bottom: 22, left: 18, right: 18 }
+                    },
+                    typography: {
+                        fontFamily: "'Gowun Batang', serif",
+                        fontSizePt: 10.5,
+                        lineHeight: 1.75,
+                        letterSpacingPx: 0,
+                        textIndentEm: 1.0,
+                        paragraphSpacingPx: 0,
+                        textColor: '#111827',
+                        paperColor: '#fdfbf7'
+                    },
+                    pages: [
+                        { id: 'p1', title: '페이지 1', content: '여기에 소설의 첫 문장을 시작해 보세요.' }
+                    ],
                     mindmap: { nodes: [], connections: [] }
                 }
             },
             scale: 1.0,
             activeTab: 'studio',
-            mindmapMode: 'pan', mindmapPanX: 0, mindmapPanY: 0, mindmapZoom: 1.0, selectedConnectSourceId: null
+            mindmapMode: 'pan',
+            mindmapPanX: 0,
+            mindmapPanY: 0,
+            mindmapZoom: 1.0,
+            selectedConnectSourceId: null
         };
 
         try {
@@ -641,59 +644,84 @@
                 onAuthStateChanged(auth, async (user) => {
                     currentUser = user;
                     updateAuthUI();
-                    if (user) loadCloudDataForUser(user.uid);
-                    else {
+                    if (user) {
+                        loadCloudDataForUser(user.uid);
+                    } else {
                         if (unsubscribeWorkspaces) { unsubscribeWorkspaces(); unsubscribeWorkspaces = null; }
-                        loadLocalStorageData(); renderWorkspaceList(); renderSpreadEditor(); renderMindMap();
+                        loadLocalStorageData();
+                        renderWorkspaceList();
+                        renderSpreadEditor();
                     }
                 });
             }
-        } catch (e) { console.warn("Firebase fallback to localStorage", e); }
+        } catch (e) { console.warn("Firebase fallback", e); }
 
         window.addEventListener('DOMContentLoaded', () => {
-            loadLocalStorageData(); renderWorkspaceList(); applyStateToUI(); renderSpreadEditor(); initMindMapEvents(); renderMindMap(); setupAutoSaveTimer();
+            loadLocalStorageData();
+            renderWorkspaceList();
+            applyStateToUI();
+            renderSpreadEditor();
+            setupAutoSaveTimer();
         });
 
-        // 과거 낱장 페이지 방식과 새로운 자동 흐름(Single Box) 방식의 안전한 병합
         function currentWS() {
-            let ws = window.state.workspaces[window.state.activeWorkspaceId] || Object.values(window.state.workspaces)[0];
-            if (ws.pages && typeof ws.content === 'undefined') {
-                ws.content = ws.pages.map(p => p.htmlContent || window.formatTextToParagraphs(p.content)).join('');
-                const tmp = document.createElement("div"); tmp.innerHTML = ws.content;
-                ws.rawText = tmp.innerText;
-            }
-            if(!ws.content) ws.content = '<p><br></p>';
-            return ws;
+            return window.state.workspaces[window.state.activeWorkspaceId] || Object.values(window.state.workspaces)[0];
         }
 
-        /* --- AUTHENTICATION --- */
         window.handleEmailLogin = async function() {
-            if (!auth) return showToast("인증 불가", "error");
-            try { await signInWithEmailAndPassword(auth, document.getElementById('auth-email-input').value.trim(), document.getElementById('auth-password-input').value.trim()); closeAuthModal(); showToast("로그인 성공", "success"); } 
-            catch (error) { showToast(`로그인 실패: ${error.message}`, "error"); }
+            if (!auth) return showToast("인증 미연결", "error");
+            const email = document.getElementById('auth-email-input').value.trim();
+            const password = document.getElementById('auth-password-input').value.trim();
+            try {
+                await signInWithEmailAndPassword(auth, email, password);
+                closeAuthModal();
+                showToast("로그인 성공", "success");
+            } catch (error) { showToast(`로그인 실패: ${error.message}`, "error"); }
         };
+
         window.handleEmailRegister = async function() {
-            if (!auth) return showToast("인증 불가", "error");
-            try { await createUserWithEmailAndPassword(auth, document.getElementById('auth-email-input').value.trim(), document.getElementById('auth-password-input').value.trim()); closeAuthModal(); showToast("가입 완료", "success"); } 
-            catch (error) { showToast(`실패: ${error.message}`, "error"); }
+            if (!auth) return showToast("인증 미연결", "error");
+            const email = document.getElementById('auth-email-input').value.trim();
+            const password = document.getElementById('auth-password-input').value.trim();
+            try {
+                await createUserWithEmailAndPassword(auth, email, password);
+                closeAuthModal();
+                showToast("회원가입 완료", "success");
+            } catch (error) { showToast(`가입 실패: ${error.message}`, "error"); }
         };
-        window.handleLogout = async function() { if (!auth) return; try { await signOut(auth); closeAuthModal(); showToast("로그아웃 됨", "info"); } catch (error) { showToast("오류", "error"); } };
+
+        window.handleLogout = async function() {
+            if (!auth) return;
+            try {
+                await signOut(auth);
+                closeAuthModal();
+                showToast("로그아웃됨", "info");
+            } catch (error) { showToast("오류 발생", "error"); }
+        };
+
         function updateAuthUI() {
+            const textEl = document.getElementById('auth-btn-text');
+            const loggedInPanel = document.getElementById('logged-in-panel');
+            const loggedOutPanel = document.getElementById('logged-out-panel');
+            const emailDisplay = document.getElementById('current-user-email-display');
             if (currentUser && !currentUser.isAnonymous) {
-                document.getElementById('auth-btn-text').textContent = currentUser.email;
-                document.getElementById('logged-in-panel').classList.remove('hidden'); document.getElementById('logged-out-panel').classList.add('hidden');
-                document.getElementById('current-user-email-display').textContent = `현재 계정: ${currentUser.email}`;
+                textEl.textContent = currentUser.email;
+                if (loggedInPanel) loggedInPanel.classList.remove('hidden');
+                if (loggedOutPanel) loggedOutPanel.classList.add('hidden');
+                if (emailDisplay) emailDisplay.textContent = `계정: ${currentUser.email}`;
             } else {
-                document.getElementById('auth-btn-text').textContent = "로그인 / 회원가입";
-                document.getElementById('logged-in-panel').classList.add('hidden'); document.getElementById('logged-out-panel').classList.remove('hidden');
+                textEl.textContent = "로그인 / 회원가입";
+                if (loggedInPanel) loggedInPanel.classList.add('hidden');
+                if (loggedOutPanel) loggedOutPanel.classList.remove('hidden');
             }
         }
 
         window.toggleAccordion = function(contentId) {
-            const content = document.getElementById(contentId), icon = document.getElementById(`${contentId}-icon`);
+            const content = document.getElementById(contentId);
+            const icon = document.getElementById(`${contentId}-icon`);
             if (!content) return;
-            if (content.classList.contains('hidden')) { content.classList.remove('hidden'); if (icon) icon.classList.add('rotate-180'); } 
-            else { content.classList.add('hidden'); if (icon) icon.classList.remove('rotate-180'); }
+            content.classList.toggle('hidden');
+            if (icon) icon.classList.toggle('rotate-180');
         };
 
         window.formatTextToParagraphs = function(text) {
@@ -701,197 +729,342 @@
             return text.split(/\r?\n/).map(line => line.trim() === '' ? '<p><br></p>' : `<p>${line.replace(/&/g, "&amp;").replace(/</g, "&lt;").replace(/>/g, "&gt;")}</p>`).join('');
         };
 
-        /* --- CONTINUOUS INPUT HANDLING (REFLOW ENGINE) --- */
-        window.handleContinuousInput = function() {
-            const ws = currentWS();
-            const editor = document.getElementById('continuous-editor');
-            if (!editor) return;
-            ws.content = editor.innerHTML;
-            ws.rawText = editor.innerText;
-            updateStatistics();
-            updatePageWidthAndInfo();
+        window.pageHTMLCache = {};
+        window.handleFocus = function(idx) {
+            const area = document.getElementById(`editor-page-${idx}`);
+            if (area) window.pageHTMLCache[idx] = area.innerHTML;
         };
 
-        window.handleContinuousPaste = function(e) {
+        window.handleInput = function(idx) {
+            const ws = currentWS();
+            const area = document.getElementById(`editor-page-${idx}`);
+            if (!area) return;
+
+            // 실시간 분량 초과 체크 후 자동 다음 페이지 넘김
+            if (area.scrollHeight > area.clientHeight + 4) {
+                area.innerHTML = window.pageHTMLCache[idx] || area.innerHTML;
+                showToast("페이지 분량을 초과하여 다음 페이지로 이동합니다.", "warning");
+                setTimeout(() => { window.autoAdvancePage(idx); }, 50);
+                return;
+            }
+
+            window.pageHTMLCache[idx] = area.innerHTML;
+            if (ws.pages[idx]) {
+                ws.pages[idx].htmlContent = area.innerHTML;
+                ws.pages[idx].content = area.innerText;
+            }
+            updateStatistics();
+        };
+
+        window.autoAdvancePage = function(currentIdx) {
+            const ws = currentWS();
+            if (currentIdx === ws.pages.length - 1) {
+                ws.pages.push({ id: 'page_' + Date.now(), title: `페이지 ${ws.pages.length + 1}`, content: '', htmlContent: '<p><br></p>' });
+            }
+            ws.activePageIndex = currentIdx + 1;
+            renderSpreadEditor();
+            performSaveOperation();
+
+            setTimeout(() => {
+                const nextArea = document.getElementById(`editor-page-${currentIdx + 1}`);
+                if (nextArea) {
+                    nextArea.focus();
+                    const range = document.createRange();
+                    const sel = window.getSelection();
+                    range.selectNodeContents(nextArea);
+                    range.collapse(true);
+                    sel.removeAllRanges();
+                    sel.addRange(range);
+                }
+            }, 50);
+        };
+
+        window.handlePagePaste = function(e, idx) {
             e.preventDefault();
             const text = (e.clipboardData || window.clipboardData).getData('text/plain');
             if (!text) return;
             document.execCommand('insertHTML', false, window.formatTextToParagraphs(text));
-            window.handleContinuousInput();
+            window.handleInput(idx);
         };
 
         window.toggleParagraphIndent = function() {
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
-            let node = sel.anchorNode;
+            const node = sel.anchorNode;
+            if (!node) return;
             let block = node.nodeType === 3 ? node.parentNode : node;
-            while (block && block.nodeName !== 'P' && block.nodeName !== 'DIV' && !block.classList?.contains('book-editor-area')) { block = block.parentNode; }
+            while (block && block.nodeName !== 'P' && block.nodeName !== 'DIV' && !block.classList?.contains('book-editor-area')) {
+                block = block.parentNode;
+            }
             if (block && (block.nodeName === 'P' || block.nodeName === 'DIV') && !block.classList.contains('book-editor-area')) {
                 block.classList.toggle('no-indent');
-                window.handleContinuousInput();
-                showToast("선택 문단 들여쓰기 변경됨", "info");
+                const area = block.closest('.book-editor-area');
+                if (area) {
+                    const idx = parseInt(area.id.replace('editor-page-', ''));
+                    const ws = currentWS();
+                    if (ws.pages[idx]) {
+                        ws.pages[idx].htmlContent = area.innerHTML;
+                        window.pageHTMLCache[idx] = area.innerHTML;
+                        performSaveOperation();
+                        showToast("선택 문단 들여쓰기 변경됨", "info");
+                    }
+                }
             }
         };
 
-        /* --- SAVE LOGIC --- */
         function setupAutoSaveTimer() {
             setInterval(async () => {
                 await performSaveOperation();
                 const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
-                document.getElementById('sync-status-text').textContent = `자동 저장: 10분 주기 (${nowStr})`;
-                showToast("자동 저장 완료", "info");
+                const syncText = document.getElementById('sync-status-text');
+                if (syncText) syncText.textContent = `자동 저장: 10분 주기 (${nowStr})`;
             }, 10 * 60 * 1000);
         }
-        window.manualSaveNow = async function() { await performSaveOperation(); showToast("저장 완료!", "success"); document.getElementById('sync-status-text').textContent = `지금 저장됨 (${new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })})`; };
-        
+
+        window.manualSaveNow = async function() {
+            await performSaveOperation();
+            showToast("저장되었습니다!", "success");
+        };
+
         async function performSaveOperation() {
-            try { localStorage.setItem('bookcraft_studio_data', JSON.stringify({ activeWorkspaceId: window.state.activeWorkspaceId, workspaces: window.state.workspaces })); } catch (e) {}
+            try {
+                localStorage.setItem('bookcraft_studio_data', JSON.stringify({
+                    activeWorkspaceId: window.state.activeWorkspaceId,
+                    workspaces: window.state.workspaces
+                }));
+            } catch (e) { console.error(e); }
+
             if (db && currentUser && !currentUser.isAnonymous) {
-                try { await setDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'workspaces', window.state.activeWorkspaceId), currentWS(), { merge: true }); } catch (err) {}
+                try {
+                    const wsRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'workspaces', window.state.activeWorkspaceId);
+                    await setDoc(wsRef, currentWS(), { merge: true });
+                } catch (err) { console.error(err); }
             }
         }
 
-        /* --- WORKSPACE MODALS --- */
-        window.openRenameWorkspaceModal = function() { document.getElementById('rename-ws-title-input').value = currentWS().title || ''; document.getElementById('modal-rename-workspace').classList.remove('hidden'); };
+        window.openRenameWorkspaceModal = function() {
+            const ws = currentWS();
+            const input = document.getElementById('rename-ws-title-input');
+            if (input) input.value = ws.title || '';
+            document.getElementById('modal-rename-workspace').classList.remove('hidden');
+        };
         window.closeRenameWorkspaceModal = function() { document.getElementById('modal-rename-workspace').classList.add('hidden'); };
         window.confirmRenameWorkspace = function() {
-            const newTitle = document.getElementById('rename-ws-title-input').value.trim();
-            if (!newTitle) return showToast("제목 입력 필요", "warning");
-            currentWS().title = newTitle; closeRenameWorkspaceModal(); renderWorkspaceList(); renderSpreadEditor(); performSaveOperation(); showToast(`"${newTitle}"(으)로 변경됨`, "success");
+            const input = document.getElementById('rename-ws-title-input');
+            const newTitle = input ? input.value.trim() : '';
+            if (!newTitle) return showToast("제목을 입력하세요", "warning");
+            currentWS().title = newTitle;
+            closeRenameWorkspaceModal();
+            renderWorkspaceList();
+            performSaveOperation();
+            showToast("제목이 변경되었습니다.", "success");
         };
 
-        window.addNewPage = function() { showToast("자동 흐름 모드: 글을 쓰면 오른쪽으로 페이지가 알아서 늘어납니다.", "info"); };
+        window.openDeletePageModal = function(index) {
+            const modal = document.getElementById('modal-delete-page');
+            document.getElementById('delete-page-modal-text').innerHTML = `<strong>Page ${index + 1}</strong>을 삭제합니다.`;
+            document.getElementById('confirm-delete-page-btn').onclick = () => {
+                const ws = currentWS();
+                if (ws.pages.length <= 1) return showToast("최소 1페이지는 유지되어야 합니다.", "warning");
+                ws.pages.splice(index, 1);
+                if (ws.activePageIndex >= ws.pages.length) ws.activePageIndex = ws.pages.length - 1;
+                renderSpreadEditor();
+                performSaveOperation();
+                closeDeletePageModal();
+                showToast("삭제되었습니다.", "error");
+            };
+            modal.classList.remove('hidden');
+        };
+        window.closeDeletePageModal = function() { document.getElementById('modal-delete-page').classList.add('hidden'); };
+
         window.jumpToPage = function() {
             const input = document.getElementById('jump-page-input');
-            const target = parseInt(input.value);
-            if(isNaN(target) || target < 1) return;
-            const viewport = document.getElementById('book-viewport');
-            const mmToPx = 3.7795275591;
-            const wPx = currentWS().book.widthMM * mmToPx;
-            if(viewport) { viewport.scrollTo({ left: (target - 1) * wPx, behavior: 'smooth' }); showToast(`${target} 페이지로 스크롤 이동했습니다.`, "info"); }
+            let target = parseInt(input.value) - 1;
+            const ws = currentWS();
+            if (isNaN(target) || target < 0 || target >= ws.pages.length) return showToast("올바른 페이지 번호가 아닙니다.", "warning");
+            ws.activePageIndex = target;
+            renderSpreadEditor();
             input.value = '';
         };
 
         window.setSpreadMode = function(isSpread) {
-            showToast("자동 흐름(Reflow) 모드에서는 창 크기에 따라 자연스럽게 양면/단면으로 보입니다.", "info");
+            const ws = currentWS();
+            ws.book.isSpread = isSpread;
+            document.getElementById('btn-mode-single').className = !isSpread ? 'p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300' : 'p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-gray-200 dark:border-gray-600 text-gray-500';
+            document.getElementById('btn-mode-spread').className = isSpread ? 'p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-brand-500 bg-brand-50 dark:bg-brand-900/30 text-brand-600 dark:text-brand-300' : 'p-2 border rounded-lg font-semibold flex flex-col items-center space-y-1 transition border-gray-200 dark:border-gray-600 text-gray-500';
+            renderSpreadEditor();
+            performSaveOperation();
         };
 
-        /* --- CONTINUOUS MULTI-COLUMN RENDERING --- */
+        // ★ 핵심 수정: 머리말과 꼬리말이 인쇄 영역 가이드(점선) 밖인 위·아래 여백 공간으로 배치되도록 위치 계산 및 렌더링 적용
+        function generatePageCSS(pageIndex) {
+            const ws = currentWS();
+            const mmToPx = 3.7795275591;
+            const widthPx = ws.book.widthMM * mmToPx;
+            const heightPx = ws.book.heightMM * mmToPx;
+            const font = ws.typography;
+            const baseMargins = ws.book.margins;
+
+            const isEvenPage = (pageIndex % 2 === 1);
+            const leftPx = (isEvenPage ? baseMargins.right : baseMargins.left) * mmToPx;
+            const rightPx = (isEvenPage ? baseMargins.left : baseMargins.right) * mmToPx;
+            const topPx = baseMargins.top * mmToPx;
+            const bottomPx = baseMargins.bottom * mmToPx;
+
+            const pageStyle = `width: ${widthPx}px; height: ${heightPx}px; background-color: ${font.paperColor}; color: ${font.textColor}; font-family: ${font.fontFamily}; font-size: ${font.fontSizePt}pt; line-height: ${font.lineHeight}; letter-spacing: ${font.letterSpacingPx}px;`;
+            const guideBoxStyle = `top:${topPx}px; bottom:${bottomPx}px; left:${leftPx}px; right:${rightPx}px;`;
+            const editorBoxStyle = `top:${topPx}px; bottom:${bottomPx}px; left:${leftPx}px; right:${rightPx}px;`;
+            
+            // 머리말과 꼬리말이 점선 박스 밖의 여백 공간(상단/하단 빈 공간)에 위치하도록 설정
+            const headerStyle = `left:${leftPx}px; right:${rightPx}px; top: ${Math.max(8, (topPx / 2) - 8)}px;`;
+            const footerStyle = `left:${leftPx}px; right:${rightPx}px; bottom: ${Math.max(8, (bottomPx / 2) - 8)}px;`;
+
+            return { pageStyle, guideBoxStyle, editorBoxStyle, headerStyle, footerStyle, widthPx, heightPx };
+        }
+
         function renderSpreadEditor() {
             const ws = currentWS();
             const container = document.getElementById('book-sheet-container');
-            const font = ws.typography;
-            const mmToPx = 3.7795275591;
-            
-            const wPx = ws.book.widthMM * mmToPx;
-            const hPx = ws.book.heightMM * mmToPx;
-            const topPx = ws.book.margins.top * mmToPx;
-            const bottomPx = ws.book.margins.bottom * mmToPx;
-            const leftPx = ws.book.margins.left * mmToPx;
-            const rightPx = ws.book.margins.right * mmToPx;
-            
-            const gapPx = leftPx + rightPx; 
-            const printableWidthPx = wPx - leftPx - rightPx;
-            const printableHeightPx = hPx - topPx - bottomPx;
-
-            const viewport = document.getElementById('book-viewport');
-            if(viewport) { viewport.classList.remove('justify-center'); viewport.classList.add('justify-start'); }
-
             container.style.transform = `scale(${window.state.scale})`;
-            container.style.transformOrigin = 'left center';
-            container.style.setProperty('--text-indent', `${font.textIndentEm !== undefined ? font.textIndentEm : 1.0}em`);
-            container.style.setProperty('--para-spacing', `${font.paragraphSpacingPx !== undefined ? font.paragraphSpacingPx : 0}px`);
+            container.style.setProperty('--text-indent', `${ws.typography.textIndentEm ?? 1.0}em`);
+            container.style.setProperty('--para-spacing', `${ws.typography.paragraphSpacingPx ?? 0}px`);
 
-            // 무한정 늘어나는 종이 배경과 그림자를 그리는 컨테이너 (paper-wrapper)
-            const html = `
-                <div id="paper-wrapper" class="shadow-2xl transition-all relative" style="
-                    background-color: ${font.paperColor};
-                    height: ${hPx}px;
-                    padding-top: ${topPx}px;
-                    padding-bottom: ${bottomPx}px;
-                    padding-left: ${leftPx}px;
-                    padding-right: ${rightPx}px;
-                    box-sizing: border-box;
-                    width: ${wPx}px; /* 동적으로 변경됨 */
-                    background-image: repeating-linear-gradient(
-                        to right,
-                        transparent 0px,
-                        transparent ${wPx - 2}px,
-                        rgba(0,0,0,0.06) ${wPx - 1}px,
-                        rgba(0,0,0,0.15) ${wPx}px
-                    );
-                    overflow: visible;
-                ">
-                    <div id="continuous-editor" contenteditable="true"
-                         oninput="handleContinuousInput()"
-                         onpaste="handleContinuousPaste(event)"
-                         class="book-editor-area outline-none"
-                         style="
-                            column-width: ${printableWidthPx}px;
-                            column-gap: ${gapPx}px;
-                            column-fill: auto;
-                            height: ${printableHeightPx}px;
-                            color: ${font.textColor};
-                            font-family: ${font.fontFamily};
-                            font-size: ${font.fontSizePt}pt;
-                            line-height: ${font.lineHeight};
-                            letter-spacing: ${font.letterSpacingPx}px;
-                            word-break: break-all;
-                         ">${ws.content}</div>
-                </div>
-            `;
+            let html = '';
+            if (!ws.book.isSpread) {
+                const idx = ws.activePageIndex || 0;
+                const page = ws.pages[idx] || ws.pages[0];
+                const pageHtml = page ? (page.htmlContent || window.formatTextToParagraphs(page.content)) : '';
+                const css = generatePageCSS(idx);
+
+                html += `
+                    <div class="relative shadow-2xl rounded-sm transition-all overflow-hidden" style="${css.pageStyle}">
+                        ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${css.guideBoxStyle}"></div>` : ''}
+                        
+                        <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${css.headerStyle}">
+                            <span>${ws.title}</span>
+                            <span>Page ${idx + 1}</span>
+                        </div>
+
+                        <div id="editor-page-${idx}" contenteditable="true" onfocus="handleFocus(${idx})" oninput="handleInput(${idx})" onpaste="handlePagePaste(event, ${idx})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${css.editorBoxStyle}; word-break: break-all;">${pageHtml}</div>
+
+                        <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${css.footerStyle}">
+                            - ${idx + 1} -
+                        </div>
+                    </div>
+                `;
+            } else {
+                const pairs = [];
+                for (let i = 0; i < ws.pages.length; i += 2) {
+                    pairs.push({ leftIndex: i, rightIndex: (i + 1 < ws.pages.length) ? i + 1 : null });
+                }
+                if ((ws.activePairIndex || 0) >= pairs.length) ws.activePairIndex = Math.max(0, pairs.length - 1);
+                const pair = pairs[ws.activePairIndex || 0];
+                const leftPage = ws.pages[pair.leftIndex];
+                const rightPage = pair.rightIndex !== null ? ws.pages[pair.rightIndex] : null;
+
+                const leftHtml = leftPage ? (leftPage.htmlContent || window.formatTextToParagraphs(leftPage.content)) : '';
+                const rightHtml = rightPage ? (rightPage.htmlContent || window.formatTextToParagraphs(rightPage.content)) : '';
+                const leftCSS = generatePageCSS(pair.leftIndex);
+                const rightCSS = rightPage ? generatePageCSS(pair.rightIndex) : null;
+
+                html += `
+                    <div class="flex shadow-2xl rounded-sm overflow-hidden border border-gray-300/40">
+                        <div class="relative spine-crease-left border-r border-gray-300/50" style="${leftCSS.pageStyle}">
+                            ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${leftCSS.guideBoxStyle}"></div>` : ''}
+                            <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${leftCSS.headerStyle}">
+                                <span>${ws.title}</span><span>Page ${pair.leftIndex + 1}</span>
+                            </div>
+                            <div id="editor-page-${pair.leftIndex}" contenteditable="true" onfocus="handleFocus(${pair.leftIndex})" oninput="handleInput(${pair.leftIndex})" onpaste="handlePagePaste(event, ${pair.leftIndex})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${leftCSS.editorBoxStyle}; word-break: break-all;">${leftHtml}</div>
+                            <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${leftCSS.footerStyle}">- ${pair.leftIndex + 1} -</div>
+                        </div>
+                        ${rightPage ? `
+                            <div class="relative spine-crease-right" style="${rightCSS.pageStyle}">
+                                ${ws.book.showMarginGuide ? `<div class="margin-guide-box absolute inset-0" style="${rightCSS.guideBoxStyle}"></div>` : ''}
+                                <div class="absolute flex items-center justify-between text-[10px] opacity-40 select-none font-sans z-10" style="${rightCSS.headerStyle}">
+                                    <span>Page ${pair.rightIndex + 1}</span><span>${ws.title}</span>
+                                </div>
+                                <div id="editor-page-${pair.rightIndex}" contenteditable="true" onfocus="handleFocus(${pair.rightIndex})" oninput="handleInput(${pair.rightIndex})" onpaste="handlePagePaste(event, ${pair.rightIndex})" class="book-editor-area absolute outline-none overflow-hidden z-10 py-1" style="${rightCSS.editorBoxStyle}; word-break: break-all;">${rightHtml}</div>
+                                <div class="absolute text-center text-[10px] opacity-50 font-sans z-10" style="${rightCSS.footerStyle}">- ${pair.rightIndex + 1} -</div>
+                            </div>
+                        ` : ''}
+                    </div>
+                `;
+            }
+
             container.innerHTML = html;
             try { document.execCommand('defaultParagraphSeparator', false, 'p'); } catch(e) {}
-            
-            const strip = document.getElementById('page-thumbnails-strip');
-            if (strip) strip.innerHTML = '<span class="text-xs text-brand-600 font-bold ml-2"><i class="fa-solid fa-wand-magic-sparkles mr-1"></i>글을 쓰면 알아서 종이가 옆으로 늘어납니다 (가로 스크롤 사용)</span>';
-            
+            renderPageThumbnails();
+            updateHeaderPageInfo();
             updateStatistics();
-            setTimeout(updatePageWidthAndInfo, 10);
         }
 
-        /* --- DYNAMIC PAGE WIDTH CALCULATOR --- */
-        window.updatePageWidthAndInfo = function() {
+        function renderPageThumbnails() {
             const ws = currentWS();
-            const editor = document.getElementById('continuous-editor');
-            const wrapper = document.getElementById('paper-wrapper');
-            if (editor && wrapper) {
-                const mmToPx = 3.7795275591;
-                const wPx = ws.book.widthMM * mmToPx;
-                const printableWidthPx = (ws.book.widthMM - ws.book.margins.left - ws.book.margins.right) * mmToPx;
-                const gapPx = (ws.book.margins.left + ws.book.margins.right) * mmToPx;
-                
-                const columnAdvance = printableWidthPx + gapPx;
-                // 스크롤된 전체 넓이로 현재 만들어진 가상 페이지 수 계산
-                const actualPages = Math.max(1, Math.ceil(editor.scrollWidth / columnAdvance));
-                
-                wrapper.style.width = `${actualPages * wPx}px`;
-                wrapper.style.minWidth = `${actualPages * wPx}px`;
-                
-                const info = document.getElementById('canvas-page-info');
-                if (info) info.textContent = `현재 자동 흐름: 총 ${actualPages} 페이지`;
-            }
+            const strip = document.getElementById('page-thumbnails-strip');
+            if (!strip) return;
+            strip.innerHTML = '';
+
+            ws.pages.forEach((p, index) => {
+                const btn = document.createElement('button');
+                const isActive = index === (ws.activePageIndex || 0);
+                btn.className = `px-3 py-1 rounded-md text-xs font-semibold shrink-0 transition flex items-center space-x-1 ${isActive ? 'bg-brand-600 text-white shadow-sm ring-2 ring-brand-400' : 'bg-gray-100 hover:bg-gray-200 dark:bg-gray-700 text-gray-700 dark:text-gray-300'}`;
+                btn.innerHTML = `<span>Page ${index + 1}</span>`;
+
+                let timer = null;
+                btn.addEventListener('mousedown', () => { timer = setTimeout(() => openDeletePageModal(index), 700); });
+                btn.addEventListener('mouseup', () => clearTimeout(timer));
+                btn.addEventListener('mouseleave', () => clearTimeout(timer));
+
+                btn.onclick = () => {
+                    ws.activePageIndex = index;
+                    renderSpreadEditor();
+                };
+                strip.appendChild(btn);
+            });
+        }
+
+        window.addNewPage = function() {
+            const ws = currentWS();
+            ws.pages.push({ id: 'page_' + Date.now(), title: `페이지 ${ws.pages.length + 1}`, content: '', htmlContent: '<p><br></p>' });
+            ws.activePageIndex = ws.pages.length - 1;
+            renderSpreadEditor();
+            performSaveOperation();
+            showToast("페이지 추가됨", "success");
         };
 
+        function updateHeaderPageInfo() {
+            const ws = currentWS();
+            const info = document.getElementById('canvas-page-info');
+            if (info) info.textContent = `Page ${(ws.activePageIndex || 0) + 1} / ${ws.pages.length}`;
+        }
+
         window.applyBookPreset = function(presetKey) {
-            const ws = currentWS(), preset = BOOK_PRESETS[presetKey];
+            const ws = currentWS();
             ws.book.presetKey = presetKey;
-            if (presetKey === 'custom') document.getElementById('custom-size-box').classList.remove('hidden');
-            else {
-                document.getElementById('custom-size-box').classList.add('hidden');
-                ws.book.widthMM = preset.width; ws.book.heightMM = preset.height;
-                document.getElementById('setting-width').value = preset.width; document.getElementById('setting-height').value = preset.height;
+            const preset = BOOK_PRESETS[presetKey];
+            const customBox = document.getElementById('custom-size-box');
+            if (presetKey === 'custom') {
+                customBox.classList.remove('hidden');
+            } else {
+                customBox.classList.add('hidden');
+                ws.book.widthMM = preset.width;
+                ws.book.heightMM = preset.height;
             }
-            document.getElementById('info-dimension-badge').textContent = `${preset.name} (${ws.book.widthMM} × ${ws.book.heightMM} mm)`;
-            renderSpreadEditor(); performSaveOperation();
+            renderSpreadEditor();
+            performSaveOperation();
         };
 
         window.updateCustomSize = function() {
             const ws = currentWS();
             ws.book.widthMM = parseFloat(document.getElementById('setting-width').value) || 152;
             ws.book.heightMM = parseFloat(document.getElementById('setting-height').value) || 225;
-            document.getElementById('info-dimension-badge').textContent = `사용자 지정 (${ws.book.widthMM} × ${ws.book.heightMM} mm)`;
-            renderSpreadEditor(); performSaveOperation();
+            renderSpreadEditor();
+            performSaveOperation();
+        };
+
+        window.toggleMarginGuide = function(checked) {
+            currentWS().book.showMarginGuide = checked;
+            renderSpreadEditor();
         };
 
         window.updateTypographySettings = function() {
@@ -911,306 +1084,199 @@
             ws.book.margins.right = parseFloat(document.getElementById('setting-margin-right').value) || 18;
 
             document.getElementById('label-font-size').textContent = `${ws.typography.fontSizePt}pt`;
-            document.getElementById('label-line-height').textContent = ws.typography.lineHeight === 1.0 ? '1.0 (없음)' : ws.typography.lineHeight;
+            document.getElementById('label-line-height').textContent = ws.typography.lineHeight;
             document.getElementById('label-letter-spacing').textContent = `${ws.typography.letterSpacingPx}px`;
             document.getElementById('label-text-indent').textContent = `${ws.typography.textIndentEm}em`;
             document.getElementById('label-paragraph-spacing').textContent = `${ws.typography.paragraphSpacingPx}px`;
-            document.getElementById('label-text-color').textContent = ws.typography.textColor;
 
-            renderSpreadEditor(); performSaveOperation();
+            renderSpreadEditor();
+            performSaveOperation();
         };
 
         window.setPaperColor = function(colorHex) {
-            currentWS().typography.paperColor = colorHex; document.getElementById('setting-paper-color').value = colorHex;
-            renderSpreadEditor(); performSaveOperation();
+            currentWS().typography.paperColor = colorHex;
+            document.getElementById('setting-paper-color').value = colorHex;
+            renderSpreadEditor();
+            performSaveOperation();
         };
 
         window.resetBookSettings = function() {
-            const ws = currentWS();
-            ws.book.margins = { top: 20, bottom: 22, left: 18, right: 18 };
-            ws.typography = { fontFamily: "'Gowun Batang', serif", fontSizePt: 10.5, lineHeight: 1.75, letterSpacingPx: 0, textIndentEm: 1.0, paragraphSpacingPx: 0, textColor: '#111827', paperColor: '#fdfbf7' };
-            applyStateToUI(); renderSpreadEditor(); showToast("설정 초기화됨", "info");
+            renderSpreadEditor();
+            showToast("초기화되었습니다.", "info");
         };
 
         function updateStatistics() {
             const ws = currentWS();
-            const textForStats = ws.rawText || '';
-            const totalChars = textForStats.length;
-            const totalWords = textForStats.trim() ? textForStats.trim().split(/\s+/).length : 0;
-            
-            const mmToPx = 3.7795275591, ptToPx = 1.333333;
-            const printableWidthPx = (ws.book.widthMM - ws.book.margins.left - ws.book.margins.right) * mmToPx;
-            const printableHeightPx = (ws.book.heightMM - ws.book.margins.top - ws.book.margins.bottom) * mmToPx;
+            let totalChars = 0;
+            ws.pages.forEach(p => { totalChars += (p.content || '').length; });
+
+            const ptToPx = 1.333333, mmToPx = 3.7795275591;
+            const printableW = (ws.book.widthMM - ws.book.margins.left - ws.book.margins.right) * mmToPx;
+            const printableH = (ws.book.heightMM - ws.book.margins.top - ws.book.margins.bottom) * mmToPx;
             const fontSizePx = ws.typography.fontSizePt * ptToPx;
 
-            const estLinesPerPage = Math.floor(printableHeightPx / (fontSizePx * Math.max(1.0, ws.typography.lineHeight)));
-            const estCharsPerLine = Math.floor(printableWidthPx / (fontSizePx + (ws.typography.letterSpacingPx || 0)));
-            const estCharsPerPage = estCharsPerLine * Math.max(0, estLinesPerPage);
+            const estLines = Math.floor(printableH / (fontSizePx * ws.typography.lineHeight));
+            const estCharsPerLine = Math.floor(printableW / fontSizePx);
+            const estCharsPerPage = estCharsPerLine * estLines;
 
             document.getElementById('stat-chars-per-line').textContent = `약 ${estCharsPerLine} 자`;
-            document.getElementById('stat-lines-per-page').textContent = `약 ${estLinesPerPage} 줄`;
+            document.getElementById('stat-lines-per-page').textContent = `약 ${estLines} 줄`;
             document.getElementById('stat-chars-per-page').textContent = `약 ${estCharsPerPage} 자`;
             document.getElementById('stat-manuscript-pages').textContent = `${(totalChars / 200).toFixed(1)} 매`;
-            document.getElementById('stat-total-chars').textContent = totalChars.toLocaleString();
-            document.getElementById('stat-total-words').textContent = totalWords.toLocaleString();
         }
 
         window.openExportModal = function() {
             const ws = currentWS();
-            const tmp = document.createElement("div"); tmp.innerHTML = ws.content || '';
-            const fullText = tmp.innerText || tmp.textContent || '';
-            document.getElementById('export-text-area').value = fullText;
+            const text = ws.pages.map((p, idx) => `[ Page ${idx + 1} ]\n\n${p.content || ''}`).join('\n\n--------------------\n\n');
+            document.getElementById('export-text-area').value = text;
             document.getElementById('modal-export').classList.remove('hidden');
         };
-
         window.closeExportModal = function() { document.getElementById('modal-export').classList.add('hidden'); };
         window.copyExportText = async function() {
-            const textArea = document.getElementById('export-text-area');
-            if (!textArea || !textArea.value) return;
-            try { await navigator.clipboard.writeText(textArea.value); showToast("클립보드에 복사됨", "success"); } 
-            catch (err) { textArea.select(); document.execCommand('copy'); window.getSelection().removeAllRanges(); showToast("복사됨", "success"); }
+            await navigator.clipboard.writeText(document.getElementById('export-text-area').value);
+            showToast("복사 완료", "success");
         };
         window.downloadAsTextFile = function() {
-            const text = document.getElementById('export-text-area').value;
-            if (!text.trim()) return showToast("내용 없음", "warning");
-            const blob = new Blob([text], { type: 'text/plain;charset=utf-8' }), url = URL.createObjectURL(blob), a = document.createElement('a');
-            a.href = url; a.download = `${(currentWS().title || '소설_원고').replace(/[\\\/\:\*\?\"\<\>\|]/g, '_')}.txt`;
-            document.body.appendChild(a); a.click(); document.body.removeChild(a); URL.revokeObjectURL(url);
-            showToast("다운로드됨", "success");
+            const blob = new Blob([document.getElementById('export-text-area').value], { type: 'text/plain;charset=utf-8' });
+            const a = document.createElement('a');
+            a.href = URL.createObjectURL(blob);
+            a.download = `${currentWS().title}.txt`;
+            a.click();
+            showToast("다운로드 완료", "success");
         };
 
-        window.adjustScale = function(delta) { window.state.scale = Math.max(0.5, Math.min(1.6, window.state.scale + delta)); document.getElementById('scale-label').textContent = `${Math.round(window.state.scale * 100)}%`; renderSpreadEditor(); };
-        window.setScale = function(val) { window.state.scale = val; document.getElementById('scale-label').textContent = `${Math.round(val * 100)}%`; renderSpreadEditor(); };
+        window.adjustScale = function(delta) {
+            window.state.scale = Math.max(0.5, Math.min(1.6, window.state.scale + delta));
+            document.getElementById('scale-label').textContent = `${Math.round(window.state.scale * 100)}%`;
+            renderSpreadEditor();
+        };
+        window.setScale = function(val) {
+            window.state.scale = val;
+            document.getElementById('scale-label').textContent = `${Math.round(val * 100)}%`;
+            renderSpreadEditor();
+        };
+
         window.toggleSidebar = function() {
-            const sidebar = document.getElementById('sidebar-panel'), expandBtn = document.getElementById('btn-expand-sidebar');
+            const sidebar = document.getElementById('sidebar-panel');
+            const expandBtn = document.getElementById('btn-expand-sidebar');
             sidebar.classList.toggle('-ml-80');
-            if (sidebar.classList.contains('-ml-80')) expandBtn.classList.remove('hidden'); else expandBtn.classList.add('hidden');
+            expandBtn.classList.toggle('hidden');
         };
-
-        /* --- MIND MAP LOGIC --- */
-        window.setMindMapMode = function(mode) {
-            window.state.mindmapMode = mode; window.state.selectedConnectSourceId = null;
-            const canvasEl = document.getElementById('mindmap-canvas'), statusText = document.getElementById('mm-status-text');
-            document.getElementById('svg-preview-line').classList.add('hidden');
-            canvasEl.classList.remove('mode-pan-active', 'mode-node-active', 'mode-connect-active');
-
-            if (mode === 'pan') {
-                document.getElementById('mm-mode-pan').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 bg-brand-600 text-white shadow";
-                document.getElementById('mm-mode-node').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                document.getElementById('mm-mode-connect').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                canvasEl.classList.add('mode-pan-active'); canvasEl.style.cursor = 'grab'; statusText.innerHTML = "<strong>🖐️ 캔버스 이동 모드</strong>";
-            } else if (mode === 'node') {
-                document.getElementById('mm-mode-node').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 bg-brand-600 text-white shadow";
-                document.getElementById('mm-mode-pan').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                document.getElementById('mm-mode-connect').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                canvasEl.classList.add('mode-node-active'); canvasEl.style.cursor = 'default'; statusText.innerHTML = "<strong>🎯 노드 이동 모드</strong>";
-            } else if (mode === 'connect') {
-                document.getElementById('mm-mode-connect').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 bg-amber-600 text-white shadow animate-pulse";
-                document.getElementById('mm-mode-pan').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                document.getElementById('mm-mode-node').className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
-                canvasEl.classList.add('mode-connect-active'); canvasEl.style.cursor = 'crosshair'; statusText.innerHTML = "<strong>🔗 노드 연결 모드</strong>";
-            }
-            renderMindMap();
-        };
-
-        window.zoomMindMap = function(delta) { window.state.mindmapZoom = Math.max(0.4, Math.min(2.5, window.state.mindmapZoom + delta)); document.getElementById('mm-zoom-label').textContent = `${Math.round(window.state.mindmapZoom * 100)}%`; updateMindMapTransform(); };
-        window.resetMindMapTransform = function() { window.state.mindmapZoom = 1.0; window.state.mindmapPanX = 0; window.state.mindmapPanY = 0; document.getElementById('mm-zoom-label').textContent = '100%'; updateMindMapTransform(); };
-        function updateMindMapTransform() { document.getElementById('mindmap-transform-layer').style.transform = `translate(${window.state.mindmapPanX}px, ${window.state.mindmapPanY}px) scale(${window.state.mindmapZoom})`; }
-
-        window.addMindMapNode = function(type) {
-            const ws = currentWS(), id = 'node_' + Date.now();
-            const titles = { character: '새 인물', event: '새 사건', plot: '새 플롯', clue: '새 복선', setting: '새 배경' };
-            const centerX = (-window.state.mindmapPanX + 250) / window.state.mindmapZoom, centerY = (-window.state.mindmapPanY + 180) / window.state.mindmapZoom;
-            ws.mindmap.nodes.push({ id, type, title: titles[type] || '노드', desc: '설명을 입력하세요', x: Math.max(50, centerX + (Math.random() * 60 - 30)), y: Math.max(50, centerY + (Math.random() * 60 - 30)) });
-            window.setMindMapMode('node'); renderMindMap(); performSaveOperation(); showToast("노드 추가됨", "success");
-        };
-        window.clearMindMap = function() { currentWS().mindmap.nodes = []; currentWS().mindmap.connections = []; renderMindMap(); performSaveOperation(); showToast("초기화됨", "info"); };
-
-        function initMindMapEvents() {
-            const canvasEl = document.getElementById('mindmap-canvas'); if (!canvasEl) return;
-            let isPanDragging = false, startPointerX = 0, startPointerY = 0, startPanX = 0, startPanY = 0;
-            canvasEl.onpointerdown = (e) => {
-                if (e.target.getAttribute('contenteditable') === 'true' || e.target.closest('.connection-group')) return;
-                if (window.state.mindmapMode === 'pan' || e.button === 1) {
-                    isPanDragging = true; startPointerX = e.clientX; startPointerY = e.clientY; startPanX = window.state.mindmapPanX; startPanY = window.state.mindmapPanY;
-                    canvasEl.setPointerCapture(e.pointerId); canvasEl.style.cursor = 'grabbing';
-                }
-            };
-            canvasEl.onpointermove = (e) => {
-                if (isPanDragging) { window.state.mindmapPanX = startPanX + (e.clientX - startPointerX); window.state.mindmapPanY = startPanY + (e.clientY - startPointerY); updateMindMapTransform(); } 
-                else if (window.state.mindmapMode === 'connect' && window.state.selectedConnectSourceId) {
-                    const sourceNode = currentWS().mindmap.nodes.find(n => n.id === window.state.selectedConnectSourceId);
-                    if (sourceNode) {
-                        const rect = document.getElementById('mindmap-transform-layer').getBoundingClientRect();
-                        const previewLine = document.getElementById('svg-preview-line');
-                        previewLine.setAttribute('x1', sourceNode.x + 90); previewLine.setAttribute('y1', sourceNode.y + 40);
-                        previewLine.setAttribute('x2', (e.clientX - rect.left) / window.state.mindmapZoom); previewLine.setAttribute('y2', (e.clientY - rect.top) / window.state.mindmapZoom);
-                        previewLine.classList.remove('hidden');
-                    }
-                }
-            };
-            canvasEl.onpointerup = canvasEl.onpointercancel = (e) => { if (isPanDragging) { isPanDragging = false; try { canvasEl.releasePointerCapture(e.pointerId); } catch(err) {} if (window.state.mindmapMode === 'pan') canvasEl.style.cursor = 'grab'; } };
-            canvasEl.onwheel = (e) => { e.preventDefault(); window.zoomMindMap(e.deltaY < 0 ? 0.08 : -0.08); };
-        }
-
-        let activeNodeDrag = null;
-        function renderMindMap() {
-            const ws = currentWS(), nodesContainer = document.getElementById('mindmap-nodes-layer'), connectionsGroup = document.getElementById('svg-connections-group');
-            if (!nodesContainer || !connectionsGroup) return;
-            updateMindMapTransform(); nodesContainer.innerHTML = ''; renderConnectionsOnly();
-
-            ws.mindmap.nodes.forEach(node => {
-                const card = document.createElement('div');
-                const colors = { character: 'border-amber-500 bg-amber-950/40 text-amber-200', event: 'border-blue-500 bg-blue-950/40 text-blue-200', plot: 'border-emerald-500 bg-emerald-950/40 text-emerald-200', clue: 'border-purple-500 bg-purple-950/40 text-purple-200', setting: 'border-rose-500 bg-rose-950/40 text-rose-200' };
-                card.className = `mindmap-node-card pointer-events-auto absolute w-48 p-3 rounded-xl border-2 backdrop-blur-md shadow-xl select-none transition-shadow ${colors[node.type] || 'border-gray-500 bg-gray-800'} ${window.state.selectedConnectSourceId === node.id ? 'ring-4 ring-amber-400 animate-pulse' : ''}`;
-                card.style.left = `${node.x}px`; card.style.top = `${node.y}px`;
-                card.innerHTML = `<div class="node-drag-handle flex items-center justify-between pb-1.5 mb-1 border-b border-white/10"><div class="flex items-center space-x-1.5 flex-1 min-w-0"><i class="fa-solid fa-grip-vertical text-[10px] opacity-40"></i><span contenteditable="true" onblur="updateNodeTitle('${node.id}', this.innerText)" class="font-bold text-xs outline-none truncate block flex-1">${node.title}</span></div><button onclick="deleteNode('${node.id}')" class="text-xs text-gray-400 hover:text-red-400 p-0.5 ml-1"><i class="fa-solid fa-xmark"></i></button></div><p contenteditable="true" onblur="updateNodeDesc('${node.id}', this.innerText)" class="text-[11px] opacity-85 outline-none font-sans leading-snug min-h-[24px]">${node.desc}</p>`;
-
-                card.onpointerdown = (e) => {
-                    if (e.target.getAttribute('contenteditable') === 'true' || window.state.mindmapMode === 'pan') return;
-                    if (window.state.mindmapMode === 'connect') { e.stopPropagation(); handleNodeConnectClick(node.id); return; }
-                    if (window.state.mindmapMode === 'node' && e.button === 0) {
-                        e.stopPropagation(); e.preventDefault();
-                        if (activeNodeDrag) { window.removeEventListener('pointermove', onGlobalNodePointerMove); window.removeEventListener('pointerup', onGlobalNodePointerUp); activeNodeDrag = null; }
-                        activeNodeDrag = { node, cardElement: card, startX: e.clientX, startY: e.clientY, initialX: node.x, initialY: node.y, rafId: null };
-                        window.addEventListener('pointermove', onGlobalNodePointerMove); window.addEventListener('pointerup', onGlobalNodePointerUp); window.addEventListener('pointercancel', onGlobalNodePointerUp);
-                    }
-                };
-                card.ondragstart = (e) => e.preventDefault();
-                nodesContainer.appendChild(card);
-            });
-        }
-        function onGlobalNodePointerMove(e) {
-            if (!activeNodeDrag) return;
-            const drag = activeNodeDrag, zoom = window.state.mindmapZoom;
-            drag.node.x = Math.max(0, drag.initialX + (e.clientX - drag.startX) / zoom); drag.node.y = Math.max(0, drag.initialY + (e.clientY - drag.startY) / zoom);
-            drag.cardElement.style.left = `${drag.node.x}px`; drag.cardElement.style.top = `${drag.node.y}px`;
-            if (drag.rafId === null) drag.rafId = requestAnimationFrame(() => { if (activeNodeDrag) activeNodeDrag.rafId = null; renderConnectionsOnly(); });
-        }
-        function onGlobalNodePointerUp(e) {
-            if (!activeNodeDrag) return;
-            window.removeEventListener('pointermove', onGlobalNodePointerMove); window.removeEventListener('pointerup', onGlobalNodePointerUp); window.removeEventListener('pointercancel', onGlobalNodePointerUp);
-            if (activeNodeDrag.rafId !== null) cancelAnimationFrame(activeNodeDrag.rafId);
-            renderConnectionsOnly(); activeNodeDrag = null; performSaveOperation();
-        }
-        function renderConnectionsOnly() {
-            const ws = currentWS(), connectionsGroup = document.getElementById('svg-connections-group'); if (!connectionsGroup) return;
-            connectionsGroup.innerHTML = '';
-            ws.mindmap.connections.forEach(conn => {
-                const fromNode = ws.mindmap.nodes.find(n => n.id === conn.from), toNode = ws.mindmap.nodes.find(n => n.id === conn.to);
-                if (fromNode && toNode) {
-                    const midX = (fromNode.x + 90 + toNode.x + 90) / 2, midY = (fromNode.y + 40 + toNode.y + 40) / 2;
-                    const g = document.createElementNS("http://www.w3.org/2000/svg", "g"); g.setAttribute("class", "connection-group pointer-events-auto cursor-pointer");
-                    g.onpointerdown = (e) => e.stopPropagation(); g.onclick = (e) => { e.stopPropagation(); e.preventDefault(); deleteConnection(conn.from, conn.to); };
-                    g.innerHTML = `<line x1="${fromNode.x+90}" y1="${fromNode.y+40}" x2="${toNode.x+90}" y2="${toNode.y+40}" stroke="#3b82f6" stroke-width="2.5" marker-end="url(#arrow)" /><line x1="${fromNode.x+90}" y1="${fromNode.y+40}" x2="${toNode.x+90}" y2="${toNode.y+40}" stroke="transparent" stroke-width="20" /><g transform="translate(${midX}, ${midY})" class="transition-transform duration-150"><circle cx="0" cy="0" r="11" fill="#ef4444" stroke="#ffffff" stroke-width="2" class="shadow-md" /><text x="0" y="4" text-anchor="middle" fill="#ffffff" font-size="13" font-weight="bold" font-family="sans-serif" style="pointer-events: none;">×</text></g>`;
-                    connectionsGroup.appendChild(g);
-                }
-            });
-        }
-        function handleNodeConnectClick(nodeId) {
-            if (!window.state.selectedConnectSourceId) { window.state.selectedConnectSourceId = nodeId; renderMindMap(); showToast("대상 노드 선택", "info"); } 
-            else if (window.state.selectedConnectSourceId !== nodeId) {
-                const ws = currentWS(), sourceId = window.state.selectedConnectSourceId;
-                const existingIndex = ws.mindmap.connections.findIndex(c => (c.from === sourceId && c.to === nodeId) || (c.from === nodeId && c.to === sourceId));
-                if (existingIndex !== -1) { ws.mindmap.connections.splice(existingIndex, 1); showToast("연결 해제됨", "info"); } 
-                else { ws.mindmap.connections.push({ from: sourceId, to: nodeId }); showToast("연결됨", "success"); }
-                window.state.selectedConnectSourceId = null; document.getElementById('svg-preview-line').classList.add('hidden'); renderMindMap(); performSaveOperation();
-            } else { window.state.selectedConnectSourceId = null; renderMindMap(); }
-        }
-        window.deleteConnection = function(fromId, toId) { currentWS().mindmap.connections = currentWS().mindmap.connections.filter(c => !(c.from === fromId && c.to === toId)); renderMindMap(); performSaveOperation(); };
-        window.updateNodeTitle = function(id, val) { const node = currentWS().mindmap.nodes.find(n => n.id === id); if (node) node.title = val; performSaveOperation(); };
-        window.updateNodeDesc = function(id, val) { const node = currentWS().mindmap.nodes.find(n => n.id === id); if (node) node.desc = val; performSaveOperation(); };
-        window.deleteNode = function(id) { const ws = currentWS(); ws.mindmap.nodes = ws.mindmap.nodes.filter(n => n.id !== id); ws.mindmap.connections = ws.mindmap.connections.filter(c => c.from !== id && c.to !== id); renderMindMap(); performSaveOperation(); };
 
         window.switchMainTab = function(tab) {
             window.state.activeTab = tab;
-            if (tab === 'studio') {
-                document.getElementById('view-studio').classList.remove('hidden'); document.getElementById('view-mindmap').classList.add('hidden');
-                document.getElementById('tab-studio-btn').className = "px-3 py-1 rounded-md transition shadow-sm bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400";
-                document.getElementById('tab-mindmap-btn').className = "px-3 py-1 rounded-md transition text-gray-600 dark:text-gray-300 hover:text-gray-900";
-                renderSpreadEditor();
-            } else {
-                document.getElementById('view-studio').classList.add('hidden'); document.getElementById('view-mindmap').classList.remove('hidden');
-                document.getElementById('tab-mindmap-btn').className = "px-3 py-1 rounded-md transition shadow-sm bg-white dark:bg-gray-800 text-brand-600 dark:text-brand-400";
-                document.getElementById('tab-studio-btn').className = "px-3 py-1 rounded-md transition text-gray-600 dark:text-gray-300 hover:text-gray-900";
-                renderMindMap();
-            }
+            document.getElementById('view-studio').classList.toggle('hidden', tab !== 'studio');
+            document.getElementById('view-mindmap').classList.toggle('hidden', tab !== 'mindmap');
+            document.getElementById('tab-studio-btn').className = tab === 'studio' ? "px-3 py-1 rounded-md transition shadow-sm bg-white dark:bg-gray-800 text-brand-600" : "px-3 py-1 rounded-md transition text-gray-600";
+            document.getElementById('tab-mindmap-btn').className = tab === 'mindmap' ? "px-3 py-1 rounded-md transition shadow-sm bg-white dark:bg-gray-800 text-brand-600" : "px-3 py-1 rounded-md transition text-gray-600";
         };
 
         function renderWorkspaceList() {
-            const select = document.getElementById('workspace-select'); select.innerHTML = '';
+            const select = document.getElementById('workspace-select');
+            select.innerHTML = '';
             Object.values(window.state.workspaces).forEach(ws => {
-                const opt = document.createElement('option'); opt.value = ws.id; opt.textContent = ws.title;
+                const opt = document.createElement('option');
+                opt.value = ws.id;
+                opt.textContent = ws.title;
                 if (ws.id === window.state.activeWorkspaceId) opt.selected = true;
                 select.appendChild(opt);
             });
         }
-        window.switchWorkspace = function(id) { window.state.activeWorkspaceId = id; applyStateToUI(); renderSpreadEditor(); renderMindMap(); renderWorkspaceList(); showToast(`"${currentWS().title}"(으)로 전환됨`, "info"); };
+
+        window.switchWorkspace = function(id) {
+            window.state.activeWorkspaceId = id;
+            applyStateToUI();
+            renderSpreadEditor();
+            renderWorkspaceList();
+        };
+
         window.openNewWorkspaceModal = function() { document.getElementById('modal-workspace').classList.remove('hidden'); };
         window.closeWorkspaceModal = function() { document.getElementById('modal-workspace').classList.add('hidden'); };
         window.createNewWorkspace = function() {
-            const title = document.getElementById('new-ws-title').value.trim() || '제목 없는 소설', newId = 'ws_' + Date.now();
-            window.state.workspaces[newId] = {
-                id: newId, title: title, activePageIndex: 0, activePairIndex: 0,
+            const title = document.getElementById('new-ws-title').value.trim() || '새 소설';
+            const id = 'ws_' + Date.now();
+            window.state.workspaces[id] = {
+                id, title, activePageIndex: 0,
                 book: { presetKey: 'sin-guk', widthMM: 152, heightMM: 225, isSpread: false, showMarginGuide: true, margins: { top: 20, bottom: 22, left: 18, right: 18 } },
                 typography: { fontFamily: "'Gowun Batang', serif", fontSizePt: 10.5, lineHeight: 1.75, letterSpacingPx: 0, textIndentEm: 1.0, paragraphSpacingPx: 0, textColor: '#111827', paperColor: '#fdfbf7' },
-                content: '<p>새 원고입니다.</p>', mindmap: { nodes: [], connections: [] }
+                pages: [{ id: 'p1', title: '페이지 1', content: '', htmlContent: '<p><br></p>' }],
+                mindmap: { nodes: [], connections: [] }
             };
-            window.state.activeWorkspaceId = newId; document.getElementById('new-ws-title').value = ''; closeWorkspaceModal(); renderWorkspaceList(); applyStateToUI(); renderSpreadEditor(); renderMindMap(); performSaveOperation(); showToast("새 원고 생성됨", "success");
+            window.state.activeWorkspaceId = id;
+            closeWorkspaceModal();
+            renderWorkspaceList();
+            applyStateToUI();
+            renderSpreadEditor();
+            performSaveOperation();
+            showToast("워크스페이스 생성됨", "success");
         };
 
         window.confirmDeleteCurrentWorkspace = async function() {
-            if (Object.keys(window.state.workspaces).length <= 1) return showToast("최소 1개의 워크스페이스가 필요합니다.", "warning");
-            if (!confirm("현재 원고를 정말 삭제하시겠습니까?")) return;
-            const targetId = window.state.activeWorkspaceId;
-            delete window.state.workspaces[targetId]; window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
-            renderWorkspaceList(); applyStateToUI(); renderSpreadEditor(); renderMindMap();
-            try { localStorage.setItem('bookcraft_studio_data', JSON.stringify({ activeWorkspaceId: window.state.activeWorkspaceId, workspaces: window.state.workspaces })); } catch (e) {}
-            if (db && currentUser && !currentUser.isAnonymous) { try { await deleteDoc(doc(db, 'artifacts', appId, 'users', currentUser.uid, 'workspaces', targetId)); } catch (err) {} }
-            showToast("완전히 삭제되었습니다.", "error");
+            if (Object.keys(window.state.workspaces).length <= 1) return showToast("최소 1개는 있어야 합니다.", "warning");
+            if (!confirm("삭제하시겠습니까?")) return;
+            delete window.state.workspaces[window.state.activeWorkspaceId];
+            window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
+            renderWorkspaceList();
+            applyStateToUI();
+            renderSpreadEditor();
+            performSaveOperation();
+            showToast("삭제됨", "error");
         };
 
         function applyStateToUI() {
             const ws = currentWS();
-            document.getElementById('setting-preset').value = ws.book.presetKey; document.getElementById('setting-width').value = ws.book.widthMM; document.getElementById('setting-height').value = ws.book.heightMM;
-            document.getElementById('setting-margin-top').value = ws.book.margins.top; document.getElementById('setting-margin-bottom').value = ws.book.margins.bottom; document.getElementById('setting-margin-left').value = ws.book.margins.left; document.getElementById('setting-margin-right').value = ws.book.margins.right;
-            document.getElementById('setting-font-family').value = ws.typography.fontFamily; document.getElementById('setting-font-size').value = ws.typography.fontSizePt; document.getElementById('setting-line-height').value = ws.typography.lineHeight; document.getElementById('setting-letter-spacing').value = ws.typography.letterSpacingPx;
-            document.getElementById('setting-text-indent').value = ws.typography.textIndentEm !== undefined ? ws.typography.textIndentEm : 1.0; document.getElementById('setting-paragraph-spacing').value = ws.typography.paragraphSpacingPx !== undefined ? ws.typography.paragraphSpacingPx : 0;
-            document.getElementById('setting-text-color').value = ws.typography.textColor; document.getElementById('setting-paper-color').value = ws.typography.paperColor;
-            
-            document.getElementById('label-font-size').textContent = `${ws.typography.fontSizePt}pt`; document.getElementById('label-line-height').textContent = ws.typography.lineHeight === 1.0 ? '1.0 (없음)' : ws.typography.lineHeight;
-            document.getElementById('label-letter-spacing').textContent = `${ws.typography.letterSpacingPx}px`; document.getElementById('label-text-indent').textContent = `${ws.typography.textIndentEm}em`; document.getElementById('label-paragraph-spacing').textContent = `${ws.typography.paragraphSpacingPx}px`;
+            document.getElementById('setting-preset').value = ws.book.presetKey;
+            document.getElementById('setting-width').value = ws.book.widthMM;
+            document.getElementById('setting-height').value = ws.book.heightMM;
+            document.getElementById('setting-margin-top').value = ws.book.margins.top;
+            document.getElementById('setting-margin-bottom').value = ws.book.margins.bottom;
+            document.getElementById('setting-margin-left').value = ws.book.margins.left;
+            document.getElementById('setting-margin-right').value = ws.book.margins.right;
+            setSpreadMode(ws.book.isSpread);
         }
 
         window.openAuthModal = function() { document.getElementById('modal-auth').classList.remove('hidden'); };
         window.closeAuthModal = function() { document.getElementById('modal-auth').classList.add('hidden'); };
 
         function loadLocalStorageData() {
-            try { const saved = localStorage.getItem('bookcraft_studio_data'); if (saved) { const parsed = JSON.parse(saved); if (parsed.workspaces) { window.state.workspaces = parsed.workspaces; window.state.activeWorkspaceId = parsed.activeWorkspaceId || Object.keys(parsed.workspaces)[0]; } } } catch (e) {}
+            const saved = localStorage.getItem('bookcraft_studio_data');
+            if (saved) {
+                const parsed = JSON.parse(saved);
+                if (parsed.workspaces) {
+                    window.state.workspaces = parsed.workspaces;
+                    window.state.activeWorkspaceId = parsed.activeWorkspaceId || Object.keys(parsed.workspaces)[0];
+                }
+            }
         }
 
         async function loadCloudDataForUser(uid) {
             if (!db) return;
-            try {
-                unsubscribeWorkspaces = onSnapshot(collection(db, 'artifacts', appId, 'users', uid, 'workspaces'), (snapshot) => {
-                    if (!snapshot.empty) {
-                        const loadedWorkspaces = {}; snapshot.forEach((docSnap) => { loadedWorkspaces[docSnap.id] = docSnap.data(); });
-                        window.state.workspaces = loadedWorkspaces; if (!window.state.workspaces[window.state.activeWorkspaceId]) window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
-                        renderWorkspaceList(); applyStateToUI(); renderSpreadEditor(); renderMindMap();
+            const wsCol = collection(db, 'artifacts', appId, 'users', uid, 'workspaces');
+            unsubscribeWorkspaces = onSnapshot(wsCol, (snapshot) => {
+                if (!snapshot.empty) {
+                    const loaded = {};
+                    snapshot.forEach(docSnap => { loaded[docSnap.id] = docSnap.data(); });
+                    window.state.workspaces = loaded;
+                    if (!window.state.workspaces[window.state.activeWorkspaceId]) {
+                        window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
                     }
-                });
-            } catch (e) {}
+                    renderWorkspaceList();
+                    applyStateToUI();
+                    renderSpreadEditor();
+                }
+            });
         }
 
         window.showToast = function(msg, type = "info") {
-            const container = document.getElementById('toast-container'), toast = document.createElement('div');
+            const container = document.getElementById('toast-container');
+            const toast = document.createElement('div');
             const styles = { success: 'bg-emerald-600 text-white', error: 'bg-red-600 text-white', warning: 'bg-amber-500 text-white', info: 'bg-gray-800 text-white' };
-            toast.className = `px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 transform translate-y-2 opacity-0 pointer-events-auto ${styles[type] || styles.info}`;
-            toast.innerHTML = `<i class="fa-solid fa-circle-info text-sm"></i><span>${msg}</span>`;
+            toast.className = `px-4 py-2.5 rounded-xl shadow-xl text-xs font-semibold flex items-center space-x-2 transition-all duration-200 ${styles[type] || styles.info}`;
+            toast.innerHTML = `<span>${msg}</span>`;
             container.appendChild(toast);
-            setTimeout(() => toast.classList.remove('translate-y-2', 'opacity-0'), 10);
-            setTimeout(() => { toast.classList.add('opacity-0', 'translate-y-2'); setTimeout(() => toast.remove(), 200); }, 2500);
+            setTimeout(() => toast.remove(), 2500);
         };
+
         window.toggleDarkMode = function() { document.documentElement.classList.toggle('dark'); };
     </script>
 </body>
