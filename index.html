@@ -328,18 +328,8 @@
                                     <span class="ml-1 text-[10px] text-gray-400">표시</span>
                                 </label>
                             </div>
-                            
-                            <!-- 짝수 페이지 여백 반전 명시적 스위치 추가 -->
-                            <div class="flex items-center justify-between mt-1">
-                                <span class="text-[11px] text-gray-500 dark:text-gray-400">짝수 페이지 여백 반전 (제본용)</span>
-                                <label class="inline-flex items-center cursor-pointer">
-                                    <input type="checkbox" id="setting-mirror-margins" onchange="toggleMirrorMargins(this.checked)" checked class="sr-only peer">
-                                    <div class="w-7 h-4 bg-gray-200 peer-focus:outline-none rounded-full peer dark:bg-gray-700 peer-checked:after:translate-x-full peer-checked:after:border-white after:content-[''] after:absolute after:top-[2px] after:left-[2px] after:bg-white after:border-gray-300 after:border after:rounded-full after:h-3 after:w-3 after:transition-all peer-checked:bg-brand-600 relative"></div>
-                                    <span class="ml-1 text-[10px] text-gray-400">적용</span>
-                                </label>
-                            </div>
 
-                            <div class="grid grid-cols-2 gap-2 font-mono mt-2">
+                            <div class="grid grid-cols-2 gap-2 font-mono">
                                 <div>
                                     <span class="text-[10px] text-gray-400">상단 (Top mm)</span>
                                     <input type="number" id="setting-margin-top" value="20" min="5" max="60" oninput="updateTypographySettings()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-1.5 text-center">
@@ -349,13 +339,18 @@
                                     <input type="number" id="setting-margin-bottom" value="22" min="5" max="60" oninput="updateTypographySettings()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-1.5 text-center">
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-gray-400">안쪽/좌측 (Left mm)</span>
+                                    <span class="text-[10px] text-gray-400">바깥쪽 (Left mm)</span>
                                     <input type="number" id="setting-margin-left" value="18" min="5" max="60" oninput="updateTypographySettings()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-1.5 text-center">
                                 </div>
                                 <div>
-                                    <span class="text-[10px] text-gray-400">바깥/우측 (Right mm)</span>
+                                    <span class="text-[10px] text-gray-400">안쪽/제본 (Right mm)</span>
                                     <input type="number" id="setting-margin-right" value="18" min="5" max="60" oninput="updateTypographySettings()" class="w-full bg-gray-50 dark:bg-gray-700 border border-gray-200 dark:border-gray-600 rounded p-1.5 text-center">
                                 </div>
+                            </div>
+
+                            <div class="bg-blue-50/70 dark:bg-blue-900/20 p-2 rounded border border-blue-200 dark:border-blue-800/40 text-[10px] text-blue-700 dark:text-blue-300 flex items-start space-x-1.5">
+                                <i class="fa-solid fa-arrows-left-right text-xs mt-0.5 shrink-0"></i>
+                                <span>짝수 페이지는 안쪽(제본)과 바깥쪽 여백이 자동으로 좌우 반전 적용됩니다.</span>
                             </div>
                         </div>
                     </div>
@@ -815,7 +810,7 @@
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-app.js";
         import { getAuth, signInWithEmailAndPassword, createUserWithEmailAndPassword, signOut, onAuthStateChanged } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-auth.js";
-        import { getFirestore, doc, setDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
+        import { getFirestore, doc, setDoc, getDoc, collection, onSnapshot, deleteDoc } from "https://www.gstatic.com/firebasejs/11.6.1/firebase-firestore.js";
 
         // APP INITIAL STATE & DEFAULTS
         const appId = typeof __app_id !== 'undefined' ? __app_id : 'bookcraft-studio-app';
@@ -847,7 +842,6 @@
                         heightMM: 225,
                         isSpread: false,
                         showMarginGuide: true,
-                        mirrorMargins: true, // 짝수 페이지 여백 대칭 모드 
                         margins: { top: 20, bottom: 22, left: 18, right: 18 }
                     },
                     typography: {
@@ -1010,24 +1004,6 @@
         }
 
         /* ------------------------------------------------------------------ */
-        /* EDITOR CONTENT PRESERVATION ENGINE (Prevents Data Loss)            */
-        /* ------------------------------------------------------------------ */
-        // 설정이나 탭을 바꿀 때, 현재 포커스된 원고 작성 내용을 즉시 저장해 날아가는 것을 방지합니다.
-        window.saveCurrentEditorContent = function() {
-            const activeEl = document.activeElement;
-            if (activeEl && activeEl.classList.contains('book-editor-area')) {
-                const idxStr = activeEl.id.replace('editor-page-', '');
-                const idx = parseInt(idxStr);
-                const ws = currentWS();
-                if (!isNaN(idx) && ws.pages[idx]) {
-                    ws.pages[idx].htmlContent = activeEl.innerHTML;
-                    ws.pages[idx].content = activeEl.innerText;
-                    window.pageHTMLCache[`${ws.id}_${idx}`] = activeEl.innerHTML;
-                }
-            }
-        };
-
-        /* ------------------------------------------------------------------ */
         /* ACCORDION FOLD/UNFOLD CONTROLLER                                   */
         /* ------------------------------------------------------------------ */
         window.toggleAccordion = function(contentId) {
@@ -1063,14 +1039,11 @@
             }).join('');
         };
 
-        // 워크스페이스 격리된 페이지 캐시: ws.id_페이지번호 로 관리하여 내용 중첩 완벽 차단
         window.pageHTMLCache = {};
-        
         window.handleFocus = function(idx) {
-            const ws = currentWS();
             const area = document.getElementById(`editor-page-${idx}`);
             if (area) {
-                window.pageHTMLCache[`${ws.id}_${idx}`] = area.innerHTML;
+                window.pageHTMLCache[idx] = area.innerHTML;
             }
         };
 
@@ -1079,10 +1052,8 @@
             const area = document.getElementById(`editor-page-${idx}`);
             if (!area) return;
 
-            const cacheKey = `${ws.id}_${idx}`;
-
             if (area.scrollHeight > area.clientHeight + 4) {
-                area.innerHTML = window.pageHTMLCache[cacheKey] || area.innerHTML;
+                area.innerHTML = window.pageHTMLCache[idx] || area.innerHTML;
                 showToast("페이지 분량을 초과하여 다음 페이지로 이동합니다.", "warning");
                 setTimeout(() => {
                     window.autoAdvancePage(idx);
@@ -1090,7 +1061,7 @@
                 return;
             }
 
-            window.pageHTMLCache[cacheKey] = area.innerHTML;
+            window.pageHTMLCache[idx] = area.innerHTML;
             if (ws.pages[idx]) {
                 ws.pages[idx].htmlContent = area.innerHTML;
                 ws.pages[idx].content = area.innerText;
@@ -1148,8 +1119,6 @@
         };
 
         window.toggleParagraphIndent = function() {
-            window.saveCurrentEditorContent();
-            
             const sel = window.getSelection();
             if (!sel.rangeCount) return;
             const node = sel.anchorNode;
@@ -1170,7 +1139,7 @@
                     const ws = currentWS();
                     if (ws.pages[idx]) {
                         ws.pages[idx].htmlContent = area.innerHTML;
-                        window.pageHTMLCache[`${ws.id}_${idx}`] = area.innerHTML;
+                        window.pageHTMLCache[idx] = area.innerHTML;
                         performSaveOperation();
                         showToast("선택한 문단의 들여쓰기 설정이 변경되었습니다.", "info");
                     }
@@ -1179,7 +1148,7 @@
         };
 
         /* ------------------------------------------------------------------ */
-        /* SAVE & PERSISTENCE LOGIC (USER SPECIFIC FIRESTORE STORAGE)         */
+        /* SAVE & PERSISTENCE LOGIC (USER SPECIFIC FIRESTORE STORAGE)           */
         /* ------------------------------------------------------------------ */
         function setupAutoSaveTimer() {
             const TEN_MINUTES_MS = 10 * 60 * 1000;
@@ -1187,11 +1156,11 @@
                 await performSaveOperation();
                 const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
                 updateSyncBadge(`자동 저장: 10분 주기 (${nowStr})`);
+                showToast("10분 주기 자동 저장이 완료되었습니다.", "info");
             }, TEN_MINUTES_MS);
         }
 
         window.manualSaveNow = async function() {
-            window.saveCurrentEditorContent();
             await performSaveOperation();
             showToast("작업 내용이 성공적으로 저장되었습니다!", "success");
             const nowStr = new Date().toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' });
@@ -1326,7 +1295,6 @@
         }
 
         window.jumpToPage = function() {
-            window.saveCurrentEditorContent();
             const input = document.getElementById('jump-page-input');
             let targetPage = parseInt(input.value);
             const ws = currentWS();
@@ -1370,7 +1338,6 @@
         }
 
         window.setSpreadMode = function(isSpread) {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.book.isSpread = isSpread;
 
@@ -1386,7 +1353,6 @@
             performSaveOperation();
         };
 
-        // 짝수 페이지 여백 대칭 로직 적용
         function generatePageCSS(pageIndex) {
             const ws = currentWS();
             const mmToPx = 3.7795275591;
@@ -1395,12 +1361,10 @@
             const font = ws.typography;
             const baseMargins = ws.book.margins;
 
-            const mirror = ws.book.mirrorMargins !== false;
             const isEvenPage = (pageIndex % 2 === 1);
             
-            // 여백 대칭 토글이 켜져있고 짝수 페이지일 때 좌/우 여백(안쪽/바깥쪽)을 서로 바꿈
-            const effectiveLeftMargin = (mirror && isEvenPage) ? baseMargins.right : baseMargins.left;
-            const effectiveRightMargin = (mirror && isEvenPage) ? baseMargins.left : baseMargins.right;
+            const effectiveLeftMargin = isEvenPage ? baseMargins.right : baseMargins.left;
+            const effectiveRightMargin = isEvenPage ? baseMargins.left : baseMargins.right;
 
             const topPx = baseMargins.top * mmToPx;
             const bottomPx = baseMargins.bottom * mmToPx;
@@ -1590,7 +1554,6 @@
                         btn,
                         () => openDeletePageModal(index, false),
                         () => {
-                            window.saveCurrentEditorContent();
                             ws.activePageIndex = index;
                             renderSpreadEditor();
                         }
@@ -1618,7 +1581,6 @@
                         btn,
                         () => openDeletePageModal(pair, true),
                         () => {
-                            window.saveCurrentEditorContent();
                             ws.activePairIndex = pairIdx;
                             renderSpreadEditor();
                         }
@@ -1630,7 +1592,6 @@
         }
 
         window.addNewPage = function() {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             const newId = 'page_' + Date.now();
             ws.pages.push({
@@ -1672,7 +1633,6 @@
         }
 
         window.applyBookPreset = function(presetKey) {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.book.presetKey = presetKey;
             const preset = BOOK_PRESETS[presetKey];
@@ -1694,7 +1654,6 @@
         };
 
         window.updateCustomSize = function() {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.book.widthMM = parseFloat(document.getElementById('setting-width').value) || 152;
             ws.book.heightMM = parseFloat(document.getElementById('setting-height').value) || 225;
@@ -1704,20 +1663,11 @@
         };
 
         window.toggleMarginGuide = function(checked) {
-            window.saveCurrentEditorContent();
             currentWS().book.showMarginGuide = checked;
             renderSpreadEditor();
         };
 
-        window.toggleMirrorMargins = function(checked) {
-            window.saveCurrentEditorContent();
-            currentWS().book.mirrorMargins = checked;
-            renderSpreadEditor();
-            performSaveOperation();
-        };
-
         window.updateTypographySettings = function() {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.typography.fontFamily = document.getElementById('setting-font-family').value;
             ws.typography.fontSizePt = parseFloat(document.getElementById('setting-font-size').value);
@@ -1746,7 +1696,6 @@
         };
 
         window.setPaperColor = function(colorHex) {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.typography.paperColor = colorHex;
             document.getElementById('setting-paper-color').value = colorHex;
@@ -1755,10 +1704,8 @@
         };
 
         window.resetBookSettings = function() {
-            window.saveCurrentEditorContent();
             const ws = currentWS();
             ws.book.margins = { top: 20, bottom: 22, left: 18, right: 18 };
-            ws.book.mirrorMargins = true;
             ws.typography = {
                 fontFamily: "'Gowun Batang', serif",
                 fontSizePt: 10.5,
@@ -1774,7 +1721,7 @@
             showToast("설정이 초기화되었습니다.", "info");
         };
 
-        window.updateStatistics = function() {
+        function updateStatistics() {
             const ws = currentWS();
             let totalChars = 0;
             let totalWords = 0;
@@ -1813,10 +1760,16 @@
             document.getElementById('stat-manuscript-pages').textContent = `${manuscriptPages} 매`;
             document.getElementById('stat-total-chars').textContent = totalChars.toLocaleString();
             document.getElementById('stat-total-words').textContent = totalWords.toLocaleString();
-        };
+        }
 
         window.openExportModal = function() {
-            window.saveCurrentEditorContent();
+            try {
+                if (typeof saveCurrentPairContent === 'function') {
+                    saveCurrentPairContent();
+                }
+            } catch (e) {
+                console.warn("현재 페이지 저장 중 문제가 발생했으나 내보내기를 계속 진행합니다.", e);
+            }
 
             const ws = currentWS();
             if (!ws || !ws.pages) {
@@ -1955,7 +1908,7 @@
                 btnConnect.className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
                 canvasEl.classList.add('mode-pan-active');
                 canvasEl.style.cursor = 'grab';
-                statusText.innerHTML = "<strong>🖐️ 캔버스 이동 모드:</strong> 바탕화면이나 노드 위를 잡고 드래그하여 화면 위치를 이동하세요. (노드는 고정됩니다)";
+                statusText.innerHTML = "<strong>🖐️ 캔버스 이동 모드:</strong> 바탕화면이나 노드 위를 잡고 드래그하여 화면 위치를 이동하세요. (연결선 중앙의 <strong>×</strong> 클릭 시 끊기)";
             } else if (mode === 'node') {
                 btnNode.className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 bg-brand-600 text-white shadow";
                 btnPan.className = "px-3 py-1 rounded-md transition flex items-center space-x-1.5 text-gray-600 dark:text-gray-300";
@@ -2161,9 +2114,9 @@
                         e.preventDefault();
 
                         if (activeNodeDrag) {
-                            window.removeEventListener('pointermove', window.onGlobalNodePointerMove);
-                            window.removeEventListener('pointerup', window.onGlobalNodePointerUp);
-                            window.removeEventListener('pointercancel', window.onGlobalNodePointerUp);
+                            window.removeEventListener('pointermove', onGlobalNodePointerMove);
+                            window.removeEventListener('pointerup', onGlobalNodePointerUp);
+                            window.removeEventListener('pointercancel', onGlobalNodePointerUp);
                             activeNodeDrag = null;
                         }
 
@@ -2174,14 +2127,12 @@
                             startY: e.clientY,
                             initialX: node.x,
                             initialY: node.y,
-                            rafId: null,
-                            pointerId: e.pointerId
+                            rafId: null
                         };
 
-                        try { card.setPointerCapture(e.pointerId); } catch(err) {}
-                        window.addEventListener('pointermove', window.onGlobalNodePointerMove);
-                        window.addEventListener('pointerup', window.onGlobalNodePointerUp);
-                        window.addEventListener('pointercancel', window.onGlobalNodePointerUp);
+                        window.addEventListener('pointermove', onGlobalNodePointerMove);
+                        window.addEventListener('pointerup', onGlobalNodePointerUp);
+                        window.addEventListener('pointercancel', onGlobalNodePointerUp);
                     }
                 };
 
@@ -2190,7 +2141,7 @@
             });
         }
 
-        window.onGlobalNodePointerMove = function(e) {
+        function onGlobalNodePointerMove(e) {
             if (!activeNodeDrag) return;
             const drag = activeNodeDrag;
             const zoom = window.state.mindmapZoom;
@@ -2209,16 +2160,14 @@
                     renderConnectionsOnly();
                 });
             }
-        };
+        }
 
-        window.onGlobalNodePointerUp = function(e) {
+        function onGlobalNodePointerUp(e) {
             if (!activeNodeDrag) return;
 
-            try { activeNodeDrag.cardElement.releasePointerCapture(activeNodeDrag.pointerId); } catch(err) {}
-
-            window.removeEventListener('pointermove', window.onGlobalNodePointerMove);
-            window.removeEventListener('pointerup', window.onGlobalNodePointerUp);
-            window.removeEventListener('pointercancel', window.onGlobalNodePointerUp);
+            window.removeEventListener('pointermove', onGlobalNodePointerMove);
+            window.removeEventListener('pointerup', onGlobalNodePointerUp);
+            window.removeEventListener('pointercancel', onGlobalNodePointerUp);
 
             if (activeNodeDrag.rafId !== null) {
                 cancelAnimationFrame(activeNodeDrag.rafId);
@@ -2227,7 +2176,7 @@
             renderConnectionsOnly();
             activeNodeDrag = null;
             performSaveOperation();
-        };
+        }
 
         function renderConnectionsOnly() {
             const ws = currentWS();
@@ -2338,7 +2287,6 @@
         };
 
         window.switchMainTab = function(tab) {
-            window.saveCurrentEditorContent();
             window.state.activeTab = tab;
             const btnStudio = document.getElementById('tab-studio-btn');
             const btnMindmap = document.getElementById('tab-mindmap-btn');
@@ -2373,7 +2321,6 @@
         }
 
         window.switchWorkspace = function(id) {
-            window.saveCurrentEditorContent();
             window.state.activeWorkspaceId = id;
             applyStateToUI();
             renderSpreadEditor();
@@ -2391,7 +2338,6 @@
         };
 
         window.createNewWorkspace = function() {
-            window.saveCurrentEditorContent();
             const titleInput = document.getElementById('new-ws-title');
             const title = titleInput.value.trim() || '제목 없는 소설';
             const newId = 'ws_' + Date.now();
@@ -2401,7 +2347,7 @@
                 title: title,
                 activePageIndex: 0,
                 activePairIndex: 0,
-                book: { presetKey: 'sin-guk', widthMM: 152, heightMM: 225, isSpread: false, showMarginGuide: true, mirrorMargins: true, margins: { top: 20, bottom: 22, left: 18, right: 18 } },
+                book: { presetKey: 'sin-guk', widthMM: 152, heightMM: 225, isSpread: false, showMarginGuide: true, margins: { top: 20, bottom: 22, left: 18, right: 18 } },
                 typography: { fontFamily: "'Gowun Batang', serif", fontSizePt: 10.5, lineHeight: 1.75, letterSpacingPx: 0, textIndentEm: 1.0, paragraphSpacingPx: 0, textColor: '#111827', paperColor: '#fdfbf7' },
                 pages: [{ id: 'p1', title: '페이지 1', content: '', htmlContent: '<p><br></p>' }],
                 mindmap: { nodes: [], connections: [] }
@@ -2431,14 +2377,17 @@
 
             const targetId = window.state.activeWorkspaceId;
             
+            // 1. 로컬 상태에서 삭제
             delete window.state.workspaces[targetId];
             window.state.activeWorkspaceId = Object.keys(window.state.workspaces)[0];
 
+            // 2. 화면 UI 업데이트
             renderWorkspaceList();
             applyStateToUI();
             renderSpreadEditor();
             renderMindMap();
 
+            // 3. LocalStorage 업데이트
             try {
                 localStorage.setItem('bookcraft_studio_data', JSON.stringify({
                     activeWorkspaceId: window.state.activeWorkspaceId,
@@ -2448,6 +2397,7 @@
                 console.error("Local storage error:", e);
             }
 
+            // 4. Firebase Firestore 서버에서 완전히 삭제
             if (db && currentUser && !currentUser.isAnonymous) {
                 try {
                     const wsDocRef = doc(db, 'artifacts', appId, 'users', currentUser.uid, 'workspaces', targetId);
@@ -2478,10 +2428,6 @@
             document.getElementById('setting-text-color').value = ws.typography.textColor;
             document.getElementById('setting-paper-color').value = ws.typography.paperColor;
             document.getElementById('setting-margin-guide').checked = ws.book.showMarginGuide;
-            
-            // 짝수 페이지 여백 반전 버튼 상태 반영 (기본값 true)
-            const mirrorMarginsToggle = document.getElementById('setting-mirror-margins');
-            if (mirrorMarginsToggle) mirrorMarginsToggle.checked = ws.book.mirrorMargins !== false;
 
             document.getElementById('label-font-size').textContent = `${ws.typography.fontSizePt}pt`;
             document.getElementById('label-line-height').textContent = ws.typography.lineHeight === 1.0 ? '1.0 (없음)' : ws.typography.lineHeight;
@@ -2520,9 +2466,6 @@
             try {
                 const wsCol = collection(db, 'artifacts', appId, 'users', uid, 'workspaces');
                 unsubscribeWorkspaces = onSnapshot(wsCol, (snapshot) => {
-                    // Firebase의 로컬 강제 덮어쓰기로 인한 데이터 날림 및 노드 파괴 현상 방어
-                    if (snapshot.metadata.hasPendingWrites) return;
-
                     if (!snapshot.empty) {
                         const loadedWorkspaces = {};
                         snapshot.forEach((docSnap) => {
@@ -2534,15 +2477,8 @@
                         }
                         renderWorkspaceList();
                         applyStateToUI();
-                        
-                        // 현재 사용자가 에디터를 조작 중이거나 드래그 중일 때는 렌더링을 차단하여 작업이 끊기는 것을 방지
-                        const isEditing = document.activeElement && document.activeElement.classList.contains('book-editor-area');
-                        if (!isEditing) {
-                            renderSpreadEditor();
-                        }
-                        if (!activeNodeDrag && window.state.mindmapMode !== 'connect') {
-                            renderMindMap();
-                        }
+                        renderSpreadEditor();
+                        renderMindMap();
                     }
                 }, (err) => console.error(err));
             } catch (e) {
